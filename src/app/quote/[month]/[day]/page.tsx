@@ -93,12 +93,9 @@ export default async function QuotePage({ params }: PageProps) {
         <div style={{
           position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
           width: '120px', height: '120px', borderRadius: '9999px', overflow: 'hidden',
-          border: '4px solid #fff', boxShadow: '0 4px 12px rgba(0,0,0,0.12)', zIndex: 10,
-          backgroundColor: '#fff', padding: '4px',
+          zIndex: 10,
         }}>
-          <div style={{ borderRadius: '9999px', overflow: 'hidden', width: '100%', height: '100%' }}>
-            <Image src="/sontoku-portrait.png" alt="二宮尊徳" width={112} height={112} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          </div>
+          <Image src="/sontoku-portrait.png" alt="二宮尊徳" width={120} height={120} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
 
         <div style={{

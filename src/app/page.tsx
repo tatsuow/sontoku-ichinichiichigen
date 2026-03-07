@@ -71,7 +71,7 @@ export default async function Home() {
       {/* ===== メインカード（Figma忠実再現） ===== */}
       {/* 肖像画がカード上端にまたがるため position: relative コンテナ。padding無しで992px全幅 */}
       <div style={{ position: 'relative', paddingTop: '64px', marginBottom: '24px' }}>
-        {/* 肖像画（カード上端に重なる） */}
+        {/* 肖像画（カード上端に重なる・白サークル無し） */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -81,15 +81,9 @@ export default async function Home() {
           height: '120px',
           borderRadius: '9999px',
           overflow: 'hidden',
-          border: '4px solid #fff',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
           zIndex: 10,
-          backgroundColor: '#fff',
-          padding: '4px',
         }}>
-          <div style={{ borderRadius: '9999px', overflow: 'hidden', width: '100%', height: '100%' }}>
-            <Image src="/sontoku-portrait.png" alt="二宮尊徳" width={112} height={112} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          </div>
+          <Image src="/sontoku-portrait.png" alt="二宮尊徳" width={120} height={120} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
 
         {/* メインカード本体 */}
