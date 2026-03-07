@@ -12,10 +12,10 @@ export default async function AdminPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-primary-text font-noto-serif-jp mb-2">
+        <h1 className="text-3xl md:text-4xl font-bold text-[#3d3428] mb-2">
           データ管理
         </h1>
-        <p className="text-secondary-text">
+        <p className="text-[#8a7d6b]">
           書籍スクリーンショットのアップロードとAI解析による解説データの登録
         </p>
       </div>
