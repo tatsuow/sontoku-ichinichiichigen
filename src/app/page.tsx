@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { getTodayQuote, formatDateString } from '@/lib/quotes';
+import { markdownToHtml } from '@/lib/markdown';
 
 export const revalidate = 86400; // Revalidate once per day at midnight
 
@@ -23,6 +24,17 @@ export default async function Home() {
 
   const dateString = formatDateString(quote.month, quote.day);
 
+  // マークダウンを各セクションでHTMLに変換
+  const [gengoHtml, gogakuHtml, hosokuHtml, shisaHtml] = await Promise.all([
+    quote.content.現代語訳 ? markdownToHtml(quote.content.現代語訳) : Promise.resolve(''),
+    quote.content.語句解説 ? markdownToHtml(quote.content.語句解説) : Promise.resolve(''),
+    quote.content.補足背景 ? markdownToHtml(quote.content.補足背景) : Promise.resolve(''),
+    quote.content.示唆 ? markdownToHtml(quote.content.示唆) : Promise.resolve(''),
+  ]);
+
+  // 原文はブロック引用（> ）を含む場合があるのでHTMLに変換
+  const genbuHtml = quote.content.原文 ? await markdownToHtml(quote.content.原文) : '';
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
@@ -34,7 +46,7 @@ export default async function Home() {
       </div>
 
       {/* Quote Card */}
-      <div className="bg-white rounded-[14px] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_rgba(0,0,0,0.1)] p-6 space-y-8 mb-8">
+      <div className="bg-white rounded-[14px] shadow-[0px_2px_8px_rgba(0,0,0,0.12),0px_1px_3px_rgba(0,0,0,0.08)] p-6 space-y-8 mb-8">
         {/* Title */}
         <div className="text-center border-b border-[rgba(107,83,68,0.15)] pb-6">
           <h2 className="text-2xl md:text-3xl font-semibold text-[#3d3428]">
@@ -59,66 +71,67 @@ export default async function Home() {
         )}
 
         {/* 原文 */}
-        {quote.content.原文 && (
+        {genbuHtml && (
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-[#8a7d6b] uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-[#8a7d6b] uppercase tracking-widest border-b border-[rgba(107,83,68,0.1)] pb-1">
               原文
             </h3>
-            <p className="text-lg leading-relaxed text-[#3d3428] whitespace-pre-wrap">
-              {quote.content.原文}
-            </p>
+            <div
+              className="prose-quote text-base leading-relaxed text-[#3d3428]"
+              dangerouslySetInnerHTML={{ __html: genbuHtml }}
+            />
           </div>
         )}
 
         {/* 現代語訳 */}
-        {quote.content.現代語訳 && (
-          <div className="space-y-2 bg-[#f5f1ec] p-6 rounded-[14px]">
-            <h3 className="text-sm font-medium text-[#8a7d6b] uppercase tracking-wider">
+        {gengoHtml && (
+          <div className="space-y-2 bg-[#f5f1ec] p-5 rounded-[10px]">
+            <h3 className="text-xs font-semibold text-[#8a7d6b] uppercase tracking-widest border-b border-[rgba(107,83,68,0.1)] pb-1 mb-3">
               現代語訳
             </h3>
-            <p className="text-base leading-relaxed text-[#3d3428] whitespace-pre-wrap">
-              {quote.content.現代語訳}
-            </p>
+            <div
+              className="prose-content text-base leading-relaxed text-[#3d3428]"
+              dangerouslySetInnerHTML={{ __html: gengoHtml }}
+            />
           </div>
         )}
 
         {/* 語句解説 */}
-        {quote.content.語句解説 && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-[#8a7d6b] uppercase tracking-wider">
+        {gogakuHtml && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-[#8a7d6b] uppercase tracking-widest border-b border-[rgba(107,83,68,0.1)] pb-1 mb-3">
               語句解説
             </h3>
-            <div className="space-y-2 text-sm text-[#3d3428]">
-              {quote.content.語句解説.split('\n').map((line, idx) => (
-                <p key={idx} className="leading-relaxed">
-                  {line}
-                </p>
-              ))}
-            </div>
+            <div
+              className="prose-content text-sm text-[#3d3428]"
+              dangerouslySetInnerHTML={{ __html: gogakuHtml }}
+            />
           </div>
         )}
 
         {/* 補足・背景 */}
-        {quote.content.補足背景 && (
+        {hosokuHtml && (
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-[#8a7d6b] uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-[#8a7d6b] uppercase tracking-widest border-b border-[rgba(107,83,68,0.1)] pb-1 mb-3">
               補足・背景
             </h3>
-            <p className="text-sm leading-relaxed text-[#3d3428] whitespace-pre-wrap">
-              {quote.content.補足背景}
-            </p>
+            <div
+              className="prose-content text-sm leading-relaxed text-[#3d3428]"
+              dangerouslySetInnerHTML={{ __html: hosokuHtml }}
+            />
           </div>
         )}
 
         {/* 示唆 */}
-        {quote.content.示唆 && (
-          <div className="space-y-2 border-l-4 border-[#6b5344] pl-4">
-            <h3 className="text-sm font-medium text-[#8a7d6b] uppercase tracking-wider">
+        {shisaHtml && (
+          <div className="space-y-2 border-l-4 border-[#6b5344] pl-4 bg-[#faf8f5] py-3 rounded-r-[10px]">
+            <h3 className="text-xs font-semibold text-[#8a7d6b] uppercase tracking-widest border-b border-[rgba(107,83,68,0.1)] pb-1 mb-3">
               仕事／暮らしへの示唆等
             </h3>
-            <p className="text-sm leading-relaxed text-[#3d3428] whitespace-pre-wrap">
-              {quote.content.示唆}
-            </p>
+            <div
+              className="prose-content text-sm leading-relaxed text-[#3d3428]"
+              dangerouslySetInnerHTML={{ __html: shisaHtml }}
+            />
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
 
 @theme {
   --color-primary-text: #3d3428;
@@ -35,4 +35,73 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Noto Serif JP', serif;
   font-weight: 500;
+}
+
+/* マークダウンレンダリング用スタイル */
+.prose-content p {
+  margin-bottom: 0.6rem;
+  line-height: 1.85;
+}
+
+.prose-content p:last-child {
+  margin-bottom: 0;
+}
+
+.prose-content strong {
+  font-weight: 600;
+  color: #3d3428;
+}
+
+.prose-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.prose-content ul li {
+  padding-left: 1.25rem;
+  position: relative;
+  margin-bottom: 0.5rem;
+  line-height: 1.8;
+}
+
+.prose-content ul li::before {
+  content: '・';
+  position: absolute;
+  left: 0;
+  color: #8a7d6b;
+}
+
+.prose-content blockquote {
+  border-left: 3px solid rgba(107, 83, 68, 0.3);
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  color: #3d3428;
+}
+
+.prose-content blockquote p {
+  margin-bottom: 0.4rem;
+}
+
+/* 原文ブロック引用スタイル */
+.prose-quote p {
+  margin-bottom: 0.5rem;
+  line-height: 1.85;
+}
+
+.prose-quote blockquote {
+  border-left: none;
+  padding-left: 0;
+  margin: 0;
+  color: #3d3428;
+  font-size: 1.05rem;
+  line-height: 1.9;
+}
+
+.prose-quote blockquote p {
+  margin-bottom: 0.5rem;
+}
+
+.prose-quote strong {
+  font-weight: 600;
 }
