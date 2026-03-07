@@ -53,7 +53,7 @@ export default async function Home() {
 
   if (!quote) {
     return (
-      <div className="max-w-3xl mx-auto px-6 py-16">
+      <div style={{ maxWidth: '48rem', margin: '0 auto', padding: '2.5rem 1.5rem' }}>
         <div className="text-center">
           <p className="text-[#8a7d6b]">本日（{todayMonth}月{todayDay}日）の言葉はまだ登録されていません</p>
         </div>
@@ -73,57 +73,54 @@ export default async function Home() {
   ]);
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10">
+    <div style={{ maxWidth: '48rem', margin: '0 auto', padding: '2.5rem 1.5rem' }}>
 
       {/* ===== メインカード ===== */}
-      <div className="bg-white rounded-[16px] shadow-[0_4px_24px_rgba(61,52,40,0.10),0_1px_4px_rgba(61,52,40,0.06)] overflow-hidden mb-8">
+      <div style={{ backgroundColor: '#fff', borderRadius: '16px', boxShadow: '0 4px 24px rgba(61,52,40,0.10), 0 1px 4px rgba(61,52,40,0.06)', overflow: 'hidden', marginBottom: '2rem' }}>
 
         {/* 上段：肖像画を中央に配置 */}
-        <div className="flex justify-center pt-8 pb-2">
-          <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-[rgba(107,83,68,0.15)] shadow-[0_2px_12px_rgba(61,52,40,0.1)]">
+        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '2rem', paddingBottom: '0.5rem' }}>
+          <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', border: '3px solid rgba(107,83,68,0.15)', boxShadow: '0 2px 12px rgba(61,52,40,0.1)' }}>
             <Image
-              src="/sontoku-portrait.svg"
+              src="/sontoku-portrait.png"
               alt="二宮尊徳"
               width={80}
               height={80}
-              className="w-full h-full object-cover"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           </div>
         </div>
 
         {/* 2カラム：左に日付・タイトル、右に書籍画像 */}
-        <div className="flex flex-col md:flex-row">
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
           {/* 左カラム：日付とタイトル */}
-          <div className="flex-1 px-8 pb-8 pt-4 flex flex-col items-center md:items-start justify-center text-center md:text-left">
+          <div style={{ flex: '1', minWidth: '280px', padding: '1rem 2rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
             <div className="mb-4">
               <span className="text-5xl font-bold text-[#3d3428] leading-none">{quote.month}月</span>
               <span className="text-7xl font-bold text-[#3d3428] leading-none ml-1">{quote.day}</span>
               <span className="text-2xl text-[#8a7d6b] ml-1">日</span>
             </div>
-            <div className="w-16 h-0.5 bg-[rgba(107,83,68,0.2)] mb-4" />
+            <div style={{ width: '4rem', height: '2px', backgroundColor: 'rgba(107,83,68,0.2)', marginBottom: '1rem' }} />
             <h1 className="text-2xl md:text-3xl font-bold text-[#3d3428] leading-snug mb-5">
               {quote.frontmatter.title}
             </h1>
-            <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+            <div className="flex flex-wrap gap-2 justify-center">
               <span className="inline-flex items-center px-4 py-2 rounded-full bg-[#f5f1ec] text-sm text-[#6b5344] font-medium border border-[rgba(107,83,68,0.12)]">
                 {dateString}の一言
-              </span>
-              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm text-[#8a7d6b] font-medium border border-[rgba(107,83,68,0.12)] hover:bg-[#f5f1ec] cursor-pointer transition-colors">
-                ↻ 今日に戻る
               </span>
             </div>
           </div>
 
           {/* 右カラム：書籍画像 */}
           {quote.imagePath && (
-            <div className="md:w-[280px] flex-shrink-0 bg-gradient-to-b from-[#f5f1ec] to-[#ede7df] flex items-center justify-center p-6">
-              <div className="relative rounded-[10px] overflow-hidden shadow-[0_4px_16px_rgba(61,52,40,0.15)]">
+            <div style={{ width: '280px', flexShrink: 0, background: 'linear-gradient(to bottom, #f5f1ec, #ede7df)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+              <div style={{ borderRadius: '10px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(61,52,40,0.15)' }}>
                 <Image
                   src={quote.imagePath}
                   alt={`${quote.frontmatter.title} 書籍スクリーンショット`}
                   width={240}
                   height={320}
-                  className="w-full h-auto object-contain"
+                  style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
                   priority
                 />
               </div>
@@ -134,17 +131,17 @@ export default async function Home() {
 
       {/* ===== 現代語訳カード（常時展開） ===== */}
       {gengoHtml && (
-        <div className="bg-white rounded-[16px] shadow-[0_2px_12px_rgba(61,52,40,0.06),0_1px_3px_rgba(61,52,40,0.04)] p-8 mb-6">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="h-px flex-1 bg-[rgba(107,83,68,0.12)]" />
+        <div style={{ backgroundColor: '#fff', borderRadius: '16px', boxShadow: '0 2px 12px rgba(61,52,40,0.06), 0 1px 3px rgba(61,52,40,0.04)', padding: '2rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            <div style={{ height: '1px', flex: '1', backgroundColor: 'rgba(107,83,68,0.12)' }} />
             <span className="text-xs font-bold text-[#8a7d6b] tracking-[0.2em] uppercase">現代語訳</span>
-            <div className="h-px flex-1 bg-[rgba(107,83,68,0.12)]" />
+            <div style={{ height: '1px', flex: '1', backgroundColor: 'rgba(107,83,68,0.12)' }} />
           </div>
           <div
             className="prose-content text-[15px] text-[#3d3428] leading-[1.9]"
             dangerouslySetInnerHTML={{ __html: gengoHtml }}
           />
-          <p className="mt-6 pt-4 border-t border-[rgba(107,83,68,0.08)] text-xs text-[#b0a696] text-center">
+          <p style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(107,83,68,0.08)', fontSize: '0.75rem', color: '#b0a696', textAlign: 'center' }}>
             出典：二宮尊徳一日一言　致知出版社
           </p>
         </div>

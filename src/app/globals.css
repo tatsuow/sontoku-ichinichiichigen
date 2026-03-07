@@ -16,16 +16,6 @@
   --radius-card: 14px;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html {
-  font-size: 16px;
-}
-
 body {
   background-color: #faf8f5;
   color: #3d3428;

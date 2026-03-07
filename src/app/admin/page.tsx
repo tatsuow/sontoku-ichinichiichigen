@@ -9,7 +9,7 @@ export default async function AdminPage() {
   const quotes = await getAllQuotes();
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div style={{ maxWidth: '72rem', margin: '0 auto', padding: '3rem 1.5rem' }}>
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-[#3d3428] mb-2">
