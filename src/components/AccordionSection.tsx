@@ -15,30 +15,34 @@ export function AccordionSection({ title, icon, htmlContent, defaultOpen = false
   if (!htmlContent) return null;
 
   return (
-    <div className="border border-[rgba(107,83,68,0.12)] rounded-[10px] overflow-hidden">
+    <div className="bg-white rounded-[12px] shadow-[0_1px_4px_rgba(61,52,40,0.06)] overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-[#faf8f5] transition-colors text-left"
+        className="w-full flex items-center justify-between px-6 py-4 hover:bg-[#faf8f5] transition-colors text-left"
       >
         <div className="flex items-center gap-3">
-          <span className="text-[#8a7d6b]">{icon}</span>
-          <span className="text-sm font-medium text-[#3d3428]">{title}</span>
+          <span className="w-7 h-7 rounded-full bg-[#f5f1ec] flex items-center justify-center text-[#8a7d6b]">
+            {icon}
+          </span>
+          <span className="text-sm font-semibold text-[#3d3428]">{title}</span>
         </div>
         <svg
-          className={`w-4 h-4 text-[#8a7d6b] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-5 h-5 text-[#b0a696] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
       {isOpen && (
-        <div className="px-5 py-4 bg-white border-t border-[rgba(107,83,68,0.08)]">
-          <div
-            className="prose-content text-sm text-[#3d3428] leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
-          />
+        <div className="px-6 pb-5 pt-1">
+          <div className="pl-10">
+            <div
+              className="prose-content text-sm text-[#3d3428] leading-[1.85]"
+              dangerouslySetInnerHTML={{ __html: htmlContent }}
+            />
+          </div>
         </div>
       )}
     </div>

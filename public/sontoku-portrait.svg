@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <circle cx="100" cy="100" r="100" fill="#f5f1ec"/>
+  <circle cx="100" cy="100" r="96" fill="#faf8f5" stroke="#d4c8b8" stroke-width="1"/>
+  <!-- 簡略化した尊徳翁の和服姿シルエット -->
+  <ellipse cx="100" cy="78" rx="28" ry="32" fill="#c4b8a6"/>
+  <!-- 顔 -->
+  <ellipse cx="100" cy="72" rx="22" ry="26" fill="#e8ddd0"/>
+  <!-- 髷（まげ） -->
+  <ellipse cx="100" cy="50" rx="10" ry="6" fill="#6b5344"/>
+  <rect x="96" y="44" width="8" height="12" rx="3" fill="#6b5344"/>
+  <!-- 目 -->
+  <ellipse cx="91" cy="70" rx="3" ry="1.5" fill="#3d3428"/>
+  <ellipse cx="109" cy="70" rx="3" ry="1.5" fill="#3d3428"/>
+  <!-- 眉 -->
+  <path d="M86 66 Q91 63 96 66" stroke="#3d3428" stroke-width="1.2" fill="none"/>
+  <path d="M104 66 Q109 63 114 66" stroke="#3d3428" stroke-width="1.2" fill="none"/>
+  <!-- 口 -->
+  <path d="M95 80 Q100 83 105 80" stroke="#8a7d6b" stroke-width="1" fill="none"/>
+  <!-- 和服の上半身 -->
+  <path d="M60 120 Q70 98 100 100 Q130 98 140 120 L145 165 L55 165 Z" fill="#8a7d6b"/>
+  <!-- 和服の襟 -->
+  <path d="M85 100 L100 130 L115 100" stroke="#f5f1ec" stroke-width="3" fill="none"/>
+  <!-- 和服の帯 -->
+  <rect x="70" y="128" width="60" height="8" rx="2" fill="#6b5344"/>
+  <!-- 下半身 -->
+  <path d="M55 165 L50 200 L150 200 L145 165 Z" fill="#7a6e5d"/>
+  <!-- 文字「報徳」 -->
+  <text x="100" y="195" text-anchor="middle" font-size="11" fill="#3d3428" font-family="serif" opacity="0.5">報徳</text>
+</svg>

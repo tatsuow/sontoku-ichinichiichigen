@@ -1,28 +1,31 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 export function Navigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="bg-[#faf8f5] border-b border-[rgba(107,83,68,0.12)]">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
+    <nav className="bg-white shadow-[0_1px_3px_rgba(61,52,40,0.08)]">
+      <div className="max-w-3xl mx-auto px-6">
+        <div className="flex items-center justify-between h-16">
           {/* サイトタイトル */}
-          <Link href="/" className="text-sm font-medium text-[#3d3428] hover:text-[#6b5344] transition-colors">
+          <Link href="/" className="text-base font-semibold text-[#3d3428] hover:text-[#6b5344] transition-colors tracking-wide">
             二宮尊徳一日一言
           </Link>
 
           {/* 中央の肖像アバター */}
-          <Link href="/" className="flex-shrink-0">
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[rgba(107,83,68,0.2)] bg-[#f5f1ec] flex items-center justify-center">
-              {/* 肖像画の代替SVGアイコン */}
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
-                <circle cx="20" cy="16" r="7" fill="#8a7d6b" opacity="0.6"/>
-                <path d="M6 36c0-7.732 6.268-14 14-14s14 6.268 14 14" fill="#8a7d6b" opacity="0.4"/>
-              </svg>
+          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[rgba(107,83,68,0.2)] shadow-[0_2px_8px_rgba(61,52,40,0.12)]">
+              <Image
+                src="/sontoku-portrait.svg"
+                alt="二宮尊徳"
+                width={48}
+                height={48}
+                className="w-full h-full object-cover"
+              />
             </div>
           </Link>
 
@@ -30,10 +33,10 @@ export function Navigation() {
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-[8px] text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                 pathname === '/'
-                  ? 'bg-[#6b5344] text-white'
-                  : 'border border-[rgba(107,83,68,0.3)] text-[#6b5344] hover:bg-[#f5f1ec]'
+                  ? 'bg-[#6b5344] text-white shadow-[0_1px_4px_rgba(107,83,68,0.3)]'
+                  : 'text-[#6b5344] hover:bg-[#f5f1ec]'
               }`}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,10 +46,10 @@ export function Navigation() {
             </Link>
             <Link
               href="/admin"
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-[8px] text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                 pathname === '/admin'
-                  ? 'bg-[#6b5344] text-white'
-                  : 'border border-[rgba(107,83,68,0.3)] text-[#6b5344] hover:bg-[#f5f1ec]'
+                  ? 'bg-[#6b5344] text-white shadow-[0_1px_4px_rgba(107,83,68,0.3)]'
+                  : 'text-[#6b5344] hover:bg-[#f5f1ec]'
               }`}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

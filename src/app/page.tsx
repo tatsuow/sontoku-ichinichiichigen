@@ -45,7 +45,6 @@ export default async function Home() {
   const todayMonth = today.getMonth() + 1;
   const todayDay = today.getDate();
 
-  // カレンダー用データ
   const calendarQuotes = allQuotes.map((q) => ({
     month: q.month,
     day: q.day,
@@ -54,7 +53,7 @@ export default async function Home() {
 
   if (!quote) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="max-w-3xl mx-auto px-6 py-16">
         <div className="text-center">
           <p className="text-[#8a7d6b]">本日（{todayMonth}月{todayDay}日）の言葉はまだ登録されていません</p>
         </div>
@@ -65,7 +64,6 @@ export default async function Home() {
 
   const dateString = formatDateString(quote.month, quote.day);
 
-  // マークダウンをHTMLに変換
   const [genbuHtml, gengoHtml, gogakuHtml, hosokuHtml, shisaHtml] = await Promise.all([
     quote.content.原文 ? markdownToHtml(quote.content.原文) : Promise.resolve(''),
     quote.content.現代語訳 ? markdownToHtml(quote.content.現代語訳) : Promise.resolve(''),
@@ -75,29 +73,51 @@ export default async function Home() {
   ]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-3xl mx-auto px-6 py-10">
 
-      {/* メインカード：左カラム（日付・タイトル）＋右カラム（書籍画像） */}
-      <div className="bg-white rounded-[14px] border border-[rgba(107,83,68,0.1)] shadow-[0px_2px_12px_rgba(61,52,40,0.08)] overflow-hidden mb-6">
+      {/* ===== メインカード ===== */}
+      <div className="bg-white rounded-[16px] shadow-[0_4px_24px_rgba(61,52,40,0.10),0_1px_4px_rgba(61,52,40,0.06)] overflow-hidden mb-8">
+
+        {/* 上段：肖像画を中央に配置 */}
+        <div className="flex justify-center pt-8 pb-2">
+          <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-[rgba(107,83,68,0.15)] shadow-[0_2px_12px_rgba(61,52,40,0.1)]">
+            <Image
+              src="/sontoku-portrait.svg"
+              alt="二宮尊徳"
+              width={80}
+              height={80}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+
+        {/* 2カラム：左に日付・タイトル、右に書籍画像 */}
         <div className="flex flex-col md:flex-row">
-
-          {/* 左カラム */}
-          <div className="flex-1 p-8 flex flex-col justify-center">
-            <p className="text-sm text-[#8a7d6b] mb-3">{dateString}</p>
-            <h1 className="text-3xl md:text-4xl font-bold text-[#3d3428] leading-tight mb-6">
+          {/* 左カラム：日付とタイトル */}
+          <div className="flex-1 px-8 pb-8 pt-4 flex flex-col items-center md:items-start justify-center text-center md:text-left">
+            <div className="mb-4">
+              <span className="text-5xl font-bold text-[#3d3428] leading-none">{quote.month}月</span>
+              <span className="text-7xl font-bold text-[#3d3428] leading-none ml-1">{quote.day}</span>
+              <span className="text-2xl text-[#8a7d6b] ml-1">日</span>
+            </div>
+            <div className="w-16 h-0.5 bg-[rgba(107,83,68,0.2)] mb-4" />
+            <h1 className="text-2xl md:text-3xl font-bold text-[#3d3428] leading-snug mb-5">
               {quote.frontmatter.title}
             </h1>
-            <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center px-4 py-2 rounded-[8px] bg-[#f5f1ec] text-sm text-[#6b5344] font-medium border border-[rgba(107,83,68,0.15)]">
+            <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+              <span className="inline-flex items-center px-4 py-2 rounded-full bg-[#f5f1ec] text-sm text-[#6b5344] font-medium border border-[rgba(107,83,68,0.12)]">
                 {dateString}の一言
+              </span>
+              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm text-[#8a7d6b] font-medium border border-[rgba(107,83,68,0.12)] hover:bg-[#f5f1ec] cursor-pointer transition-colors">
+                ↻ 今日に戻る
               </span>
             </div>
           </div>
 
           {/* 右カラム：書籍画像 */}
           {quote.imagePath && (
-            <div className="md:w-72 flex-shrink-0 bg-[#f5f1ec] flex items-center justify-center p-4 border-t md:border-t-0 md:border-l border-[rgba(107,83,68,0.1)]">
-              <div className="relative w-full max-w-[240px] rounded-[8px] overflow-hidden shadow-[0px_2px_8px_rgba(0,0,0,0.12)]">
+            <div className="md:w-[280px] flex-shrink-0 bg-gradient-to-b from-[#f5f1ec] to-[#ede7df] flex items-center justify-center p-6">
+              <div className="relative rounded-[10px] overflow-hidden shadow-[0_4px_16px_rgba(61,52,40,0.15)]">
                 <Image
                   src={quote.imagePath}
                   alt={`${quote.frontmatter.title} 書籍スクリーンショット`}
@@ -112,31 +132,33 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* 現代語訳（常時展開） */}
+      {/* ===== 現代語訳カード（常時展開） ===== */}
       {gengoHtml && (
-        <div className="bg-white rounded-[14px] border border-[rgba(107,83,68,0.1)] shadow-[0px_1px_4px_rgba(61,52,40,0.06)] p-6 mb-4">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-px flex-1 bg-[rgba(107,83,68,0.15)]" />
-            <span className="text-xs font-semibold text-[#8a7d6b] tracking-widest px-2">現代語訳</span>
-            <div className="h-px flex-1 bg-[rgba(107,83,68,0.15)]" />
+        <div className="bg-white rounded-[16px] shadow-[0_2px_12px_rgba(61,52,40,0.06),0_1px_3px_rgba(61,52,40,0.04)] p-8 mb-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="h-px flex-1 bg-[rgba(107,83,68,0.12)]" />
+            <span className="text-xs font-bold text-[#8a7d6b] tracking-[0.2em] uppercase">現代語訳</span>
+            <div className="h-px flex-1 bg-[rgba(107,83,68,0.12)]" />
           </div>
           <div
-            className="prose-content text-[15px] text-[#3d3428] leading-relaxed"
+            className="prose-content text-[15px] text-[#3d3428] leading-[1.9]"
             dangerouslySetInnerHTML={{ __html: gengoHtml }}
           />
-          <p className="mt-4 text-xs text-[#8a7d6b] text-right">出典：二宮尊徳一日一言　致知出版社</p>
+          <p className="mt-6 pt-4 border-t border-[rgba(107,83,68,0.08)] text-xs text-[#b0a696] text-center">
+            出典：二宮尊徳一日一言　致知出版社
+          </p>
         </div>
       )}
 
-      {/* アコーディオンセクション */}
-      <div className="space-y-2 mb-4">
+      {/* ===== アコーディオンセクション ===== */}
+      <div className="space-y-3 mb-8">
         <AccordionSection title="原文" icon={<BookIcon />} htmlContent={genbuHtml} />
         <AccordionSection title="語句解説" icon={<GridIcon />} htmlContent={gogakuHtml} />
         <AccordionSection title="補足・背景" icon={<ChatIcon />} htmlContent={hosokuHtml} />
         <AccordionSection title="仕事／暮らしへの示唆" icon={<LightbulbIcon />} htmlContent={shisaHtml} />
       </div>
 
-      {/* カレンダー */}
+      {/* ===== カレンダー ===== */}
       <Calendar quotes={calendarQuotes} todayMonth={todayMonth} todayDay={todayDay} />
     </div>
   );
