@@ -131,7 +131,7 @@ export function Calendar({ quotes, todayMonth, todayDay }: CalendarProps) {
                 } ${isToday ? 'bg-[#f5f1ec] rounded-[6px]' : ''}`}
               >
                 {hasQuote ? (
-                  <Link href={`/?month=${displayMonth}&day=${day}`} className="block h-full">
+                  <Link href={`/quote/${displayMonth}/${day}`} className="block h-full">
                     <span
                       className={`block w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium mx-auto mb-0.5 ${
                         isToday
