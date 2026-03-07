@@ -15,19 +15,48 @@ export function AccordionSection({ title, icon, htmlContent, defaultOpen = false
   if (!htmlContent) return null;
 
   return (
-    <div className="bg-white rounded-[12px] shadow-[0_1px_4px_rgba(61,52,40,0.06)] overflow-hidden">
+    <div style={{
+      border: '1px solid rgba(107,83,68,0.15)',
+      borderRadius: '14px',
+      overflow: 'hidden',
+    }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-6 py-4 hover:bg-[#faf8f5] transition-colors text-left"
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '0 20px',
+          height: '52px',
+          backgroundColor: 'rgba(240,235,228,0.2)',
+          border: 'none',
+          cursor: 'pointer',
+          textAlign: 'left',
+        }}
       >
-        <div className="flex items-center gap-3">
-          <span className="w-7 h-7 rounded-full bg-[#f5f1ec] flex items-center justify-center text-[#8a7d6b]">
-            {icon}
-          </span>
-          <span className="text-sm font-semibold text-[#3d3428]">{title}</span>
-        </div>
+        <span style={{ width: '20px', height: '20px', color: '#8a7d6b', flexShrink: 0 }}>
+          {icon}
+        </span>
+        <span style={{
+          flex: 1,
+          fontFamily: "'Noto Serif JP', serif",
+          fontWeight: 500,
+          fontSize: '16px',
+          lineHeight: '24px',
+          color: '#3d3428',
+        }}>
+          {title}
+        </span>
         <svg
-          className={`w-5 h-5 text-[#b0a696] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          style={{
+            width: '20px',
+            height: '20px',
+            color: '#b0a696',
+            transition: 'transform 0.2s',
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            flexShrink: 0,
+          }}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -36,13 +65,17 @@ export function AccordionSection({ title, icon, htmlContent, defaultOpen = false
         </svg>
       </button>
       {isOpen && (
-        <div className="px-6 pb-5 pt-1">
-          <div className="pl-10">
-            <div
-              className="prose-content text-sm text-[#3d3428] leading-[1.85]"
-              dangerouslySetInnerHTML={{ __html: htmlContent }}
-            />
-          </div>
+        <div style={{ padding: '16px 20px 20px', backgroundColor: '#fff' }}>
+          <div
+            className="prose-content"
+            style={{
+              fontFamily: "'Noto Serif JP', serif",
+              fontSize: '15px',
+              color: '#3d3428',
+              lineHeight: '28px',
+            }}
+            dangerouslySetInnerHTML={{ __html: htmlContent }}
+          />
         </div>
       )}
     </div>

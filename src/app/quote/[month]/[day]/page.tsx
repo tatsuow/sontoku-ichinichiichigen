@@ -86,31 +86,7 @@ export default async function QuotePage({ params }: PageProps) {
   ]);
 
   return (
-    <div style={{ maxWidth: '992px', margin: '0 auto', padding: '0 1.5rem 2.5rem' }}>
-
-      {/* 今日に戻るボタン */}
-      {!isToday && (
-        <div style={{ textAlign: 'center', padding: '1.5rem 0 0.5rem' }}>
-          <Link href="/" style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '6px 20px',
-            borderRadius: '9999px',
-            border: '1px solid rgba(107,83,68,0.15)',
-            fontFamily: "'Noto Sans JP', sans-serif",
-            fontSize: '14px',
-            color: '#8a7d6b',
-            textDecoration: 'none',
-            backgroundColor: '#fff',
-          }}>
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            今日（{todayMonth}月{todayDay}日）に戻る
-          </Link>
-        </div>
-      )}
+    <div style={{ maxWidth: '992px', margin: '0 auto', padding: '1.5rem 1.5rem 2.5rem' }}>
 
       {/* メインカード */}
       <div style={{ position: 'relative', paddingTop: '64px', marginBottom: '24px' }}>
@@ -159,11 +135,14 @@ export default async function QuotePage({ params }: PageProps) {
                   </span>
                   {!isToday && (
                     <Link href="/" style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '4px',
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
                       border: '1px solid rgba(107,83,68,0.15)', borderRadius: '9999px',
                       padding: '5px 16px', fontFamily: "'Noto Sans JP', sans-serif",
-                      fontSize: '16px', color: '#8a7d6b', textDecoration: 'none',
+                      fontWeight: 500, fontSize: '16px', color: '#8a7d6b', textDecoration: 'none',
                     }}>
+                      <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l6-6M3 12l6 6M3 12h14a4 4 0 010 8H7" />
+                      </svg>
                       今日に戻る
                     </Link>
                   )}
