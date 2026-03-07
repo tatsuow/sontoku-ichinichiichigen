@@ -1,8 +1,20 @@
+@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+  --color-primary-text: #3d3428;
+  --color-primary-button: #6b5344;
+  --color-secondary-text: #8a7d6b;
+  --color-bg-default: #faf8f5;
+  --color-bg-card: #ffffff;
+  --color-bg-input: #f5f1ec;
+
+  --font-family-noto-serif-jp: 'Noto Serif JP', serif;
+  --font-family-noto-sans-jp: 'Noto Sans JP', sans-serif;
+
+  --radius-input: 10px;
+  --radius-card: 14px;
+}
 
 * {
   margin: 0;
