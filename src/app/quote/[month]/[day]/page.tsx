@@ -86,10 +86,10 @@ export default async function QuotePage({ params }: PageProps) {
   ]);
 
   return (
-    <div style={{ maxWidth: '992px', margin: '0 auto', padding: '1.5rem 1.5rem 2.5rem' }}>
+    <div style={{ maxWidth: '992px', margin: '0 auto' }}>
 
-      {/* メインカード */}
-      <div style={{ position: 'relative', paddingTop: '64px', marginBottom: '24px' }}>
+      {/* メインカード - padding無しで992px全幅。肖像画のセンタリング基準 */}
+      <div style={{ position: 'relative', paddingTop: '64px', marginTop: '1.5rem', marginBottom: '24px' }}>
         <div style={{
           position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
           width: '120px', height: '120px', borderRadius: '9999px', overflow: 'hidden',
@@ -168,36 +168,40 @@ export default async function QuotePage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* 現代語訳 */}
-      {gengoHtml && (
-        <div style={{
-          backgroundColor: '#fff', borderRadius: '16px',
-          border: '1px solid rgba(107,83,68,0.15)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.1)',
-          padding: '33px', marginBottom: '24px',
-        }}>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ width: '24px', height: '1px', backgroundColor: 'rgba(107,83,68,0.3)' }} />
-            <span style={{ fontFamily: "'Noto Serif JP', serif", fontSize: '16px', color: 'rgba(107,83,68,0.6)', whiteSpace: 'nowrap' as const }}>現代語訳</span>
-            <div style={{ height: '1px', flex: 1, backgroundColor: 'rgba(107,83,68,0.3)' }} />
+      {/* 以下はpadding付き */}
+      <div style={{ padding: '0 0 2.5rem' }}>
+        {/* 現代語訳 */}
+        {gengoHtml && (
+          <div style={{
+            backgroundColor: '#fff', borderRadius: '16px',
+            border: '1px solid rgba(107,83,68,0.15)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.1)',
+            padding: '33px', marginBottom: '24px',
+          }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ width: '24px', height: '1px', backgroundColor: 'rgba(107,83,68,0.3)' }} />
+              <span style={{ fontFamily: "'Noto Serif JP', serif", fontSize: '16px', color: 'rgba(107,83,68,0.6)', whiteSpace: 'nowrap' as const }}>現代語訳</span>
+              <div style={{ height: '1px', flex: 1, backgroundColor: 'rgba(107,83,68,0.3)' }} />
+            </div>
+            <div className="prose-content" style={{ fontFamily: "'Noto Serif JP', serif", fontSize: '16px', color: '#3d3428', lineHeight: '32px' }}
+              dangerouslySetInnerHTML={{ __html: gengoHtml }} />
+            <p style={{ fontFamily: "'Noto Serif JP', serif", fontSize: '16px', color: 'rgba(138,125,107,0.6)', marginTop: '16px' }}>
+              出典：二宮尊徳一日一言 致知出版社
+            </p>
           </div>
-          <div className="prose-content" style={{ fontFamily: "'Noto Serif JP', serif", fontSize: '16px', color: '#3d3428', lineHeight: '32px' }}
-            dangerouslySetInnerHTML={{ __html: gengoHtml }} />
-          <p style={{ fontFamily: "'Noto Serif JP', serif", fontSize: '16px', color: 'rgba(138,125,107,0.6)', marginTop: '16px' }}>
-            出典：二宮尊徳一日一言 致知出版社
-          </p>
+        )}
+
+        {/* アコーディオン */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '2rem' }}>
+          <AccordionSection title="原文" icon={<ScrollTextIcon />} htmlContent={genbuHtml} />
+          <AccordionSection title="語句解説" icon={<BookOpenIcon />} htmlContent={gogakuHtml} />
+          <AccordionSection title="補足・背景" icon={<MessageIcon />} htmlContent={hosokuHtml} />
+          <AccordionSection title="仕事／暮らしへの示唆" icon={<LightbulbIcon />} htmlContent={shisaHtml} />
         </div>
-      )}
 
-      {/* アコーディオン */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '2rem' }}>
-        <AccordionSection title="原文" icon={<ScrollTextIcon />} htmlContent={genbuHtml} />
-        <AccordionSection title="語句解説" icon={<BookOpenIcon />} htmlContent={gogakuHtml} />
-        <AccordionSection title="補足・背景" icon={<MessageIcon />} htmlContent={hosokuHtml} />
-        <AccordionSection title="仕事／暮らしへの示唆" icon={<LightbulbIcon />} htmlContent={shisaHtml} />
+        {/* カレンダー: 選択された日付の月を表示 */}
+        <Calendar quotes={calendarQuotes} todayMonth={todayMonth} todayDay={todayDay} selectedMonth={month} selectedDay={day} />
       </div>
-
-      <Calendar quotes={calendarQuotes} todayMonth={todayMonth} todayDay={todayDay} />
     </div>
   );
 }

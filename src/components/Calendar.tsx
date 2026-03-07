@@ -13,6 +13,8 @@ interface CalendarProps {
   quotes: CalendarQuote[];
   todayMonth: number;
   todayDay: number;
+  selectedMonth?: number;
+  selectedDay?: number;
 }
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
@@ -26,9 +28,10 @@ function getFirstDayOfMonth(year: number, month: number): number {
   return new Date(year, month - 1, 1).getDay();
 }
 
-export function Calendar({ quotes, todayMonth, todayDay }: CalendarProps) {
+export function Calendar({ quotes, todayMonth, todayDay, selectedMonth, selectedDay }: CalendarProps) {
   const currentYear = new Date().getFullYear();
-  const [displayMonth, setDisplayMonth] = useState(todayMonth);
+  // 選択された月がある場合はその月を表示、なければ今日の月
+  const [displayMonth, setDisplayMonth] = useState(selectedMonth ?? todayMonth);
 
   // このmonthに登録されているquotesのマップ
   const quoteMap = new Map<number, string>();
@@ -117,6 +120,7 @@ export function Calendar({ quotes, todayMonth, todayDay }: CalendarProps) {
             }
 
             const isToday = day === todayDay && displayMonth === todayMonth;
+            const isSelected = day === selectedDay && displayMonth === selectedMonth;
             const hasQuote = quoteMap.has(day);
             const quoteTitle = quoteMap.get(day);
             const weekday = (firstDay + day - 1) % 7;
@@ -128,13 +132,15 @@ export function Calendar({ quotes, todayMonth, todayDay }: CalendarProps) {
                 key={day}
                 className={`h-16 p-1 relative ${
                   hasQuote ? 'cursor-pointer hover:bg-[#faf8f5] rounded-[6px]' : ''
-                } ${isToday ? 'bg-[#f5f1ec] rounded-[6px]' : ''}`}
+                } ${isSelected ? 'bg-[#f5f1ec] rounded-[6px] ring-2 ring-[#6b5344]' : isToday ? 'bg-[#f5f1ec] rounded-[6px]' : ''}`}
               >
                 {hasQuote ? (
                   <Link href={`/quote/${displayMonth}/${day}`} className="block h-full">
                     <span
                       className={`block w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium mx-auto mb-0.5 ${
-                        isToday
+                        isSelected
+                          ? 'bg-[#6b5344] text-white'
+                          : isToday
                           ? 'bg-[#6b5344] text-white'
                           : isSunday
                           ? 'text-red-400'
