@@ -37,25 +37,47 @@ export function QuotesTable({ quotes }: QuotesTableProps) {
 
   return (
     <div className="bg-white rounded-[14px] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_rgba(0,0,0,0.1)] p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-[#3d3428]">
+      <div>
+        <h3 className="text-lg font-medium text-[#3d3428]" style={{ marginBottom: '12px' }}>
           登録済みリスト（{filteredQuotes.length}件）
         </h3>
-        <select
-          value={filterMonth}
-          onChange={(e) => {
-            const val = e.target.value;
-            setFilterMonth(val === 'all' ? 'all' : parseInt(val));
-          }}
-          className="max-w-xs px-4 py-3 rounded-[10px] bg-[#f5f1ec] border border-[rgba(107,83,68,0.15)] placeholder:text-[#8a7d6b] focus:outline-none focus:ring-2 focus:ring-[#6b5344] focus:ring-opacity-20"
-        >
-          <option value="all">すべての月</option>
-          {months.map((month) => (
-            <option key={month} value={month}>
-              {month}月
-            </option>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0', overflowX: 'auto' }}>
+          <button
+            onClick={() => setFilterMonth('all')}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '8px',
+              border: filterMonth === 'all' ? '2px solid #6b5344' : '1px solid transparent',
+              backgroundColor: filterMonth === 'all' ? '#6b5344' : 'transparent',
+              color: filterMonth === 'all' ? '#fff' : '#8a7d6b',
+              fontWeight: filterMonth === 'all' ? 600 : 400,
+              fontSize: '13px',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            全て
+          </button>
+          {months.map((m) => (
+            <button
+              key={m}
+              onClick={() => setFilterMonth(m)}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '8px',
+                border: filterMonth === m ? '2px solid #6b5344' : '1px solid transparent',
+                backgroundColor: filterMonth === m ? '#6b5344' : 'transparent',
+                color: filterMonth === m ? '#fff' : '#8a7d6b',
+                fontWeight: filterMonth === m ? 600 : 400,
+                fontSize: '13px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {m}月
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
       <div className="overflow-x-auto">

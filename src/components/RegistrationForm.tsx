@@ -20,6 +20,13 @@ const DAYS_IN_MONTH: Record<number, number> = {
   7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31,
 };
 
+const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
+
+// 2026年のその月の1日の曜日を返す（0=日曜日）
+function getFirstDayOfMonth(month: number): number {
+  return new Date(2026, month - 1, 1).getDay();
+}
+
 export function RegistrationForm() {
   const [apiKey, setApiKey] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -40,8 +47,8 @@ export function RegistrationForm() {
   const [successMessage, setSuccessMessage] = useState('');
 
   const [formData, setFormData] = useState<FormData>({
-    month: 1,
-    day: 1,
+    month: new Date().getMonth() + 1,
+    day: new Date().getDate(),
     title: '',
     originalText: '',
     modernTranslation: '',
@@ -49,6 +56,9 @@ export function RegistrationForm() {
     background: '',
     implication: '',
   });
+
+  // カレンダー表示月
+  const [calMonth, setCalMonth] = useState(formData.month);
 
   // トークン保存
   const handleSaveTokens = () => {
@@ -95,29 +105,19 @@ export function RegistrationForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 月選択
-  const handleMonthSelect = (m: number) => {
-    setFormData((prev) => {
-      const maxDay = DAYS_IN_MONTH[m];
-      return { ...prev, month: m, day: prev.day > maxDay ? maxDay : prev.day };
-    });
+  // カレンダーで日を選択
+  const handleCalDaySelect = (d: number) => {
+    setFormData((prev) => ({ ...prev, month: calMonth, day: d }));
   };
 
-  // 日選択
-  const handleDaySelect = (d: number) => {
-    setFormData((prev) => ({ ...prev, day: d }));
-  };
+  // カレンダー月移動
+  const handleCalPrev = () => setCalMonth((m) => (m <= 1 ? 12 : m - 1));
+  const handleCalNext = () => setCalMonth((m) => (m >= 12 ? 1 : m + 1));
 
   // AI解析
   const handleAnalyze = async () => {
-    if (!apiKey) {
-      setErrorMessage('Gemini APIキーを入力してください');
-      return;
-    }
-    if (!uploadedImage) {
-      setErrorMessage('画像をアップロードしてください');
-      return;
-    }
+    if (!apiKey) { setErrorMessage('Gemini APIキーを入力してください'); return; }
+    if (!uploadedImage) { setErrorMessage('画像をアップロードしてください'); return; }
 
     setStatus('analyzing');
     setErrorMessage('');
@@ -125,18 +125,11 @@ export function RegistrationForm() {
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
-        },
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
         body: JSON.stringify({ image: uploadedImage }),
       });
-
       const result = await res.json();
-
-      if (!result.success) {
-        throw new Error(result.error || '解析に失敗しました');
-      }
+      if (!result.success) throw new Error(result.error || '解析に失敗しました');
 
       const d = result.data;
       setFormData({
@@ -149,7 +142,7 @@ export function RegistrationForm() {
         background: (d.background || '').replace(/\\n/g, '\n'),
         implication: (d.implication || '').replace(/\\n/g, '\n'),
       });
-
+      setCalMonth(d.month || 1);
       setStatus('idle');
       setSuccessMessage('AI解析が完了しました。内容を確認・編集して登録してください。');
       setTimeout(() => setSuccessMessage(''), 4000);
@@ -161,14 +154,8 @@ export function RegistrationForm() {
 
   // 保存（GitHub API経由）
   const handleSave = async () => {
-    if (!formData.title) {
-      setErrorMessage('タイトルは必須です');
-      return;
-    }
-    if (!githubToken) {
-      setErrorMessage('GitHubトークンを入力してください');
-      return;
-    }
+    if (!formData.title) { setErrorMessage('タイトルは必須です'); return; }
+    if (!githubToken) { setErrorMessage('GitHubトークンを入力してください'); return; }
 
     setStatus('saving');
     setErrorMessage('');
@@ -176,43 +163,17 @@ export function RegistrationForm() {
     try {
       const res = await fetch('/api/save-quote', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-GitHub-Token': githubToken,
-        },
-        body: JSON.stringify({
-          ...formData,
-          imageData: uploadedImage,
-        }),
+        headers: { 'Content-Type': 'application/json', 'X-GitHub-Token': githubToken },
+        body: JSON.stringify({ ...formData, imageData: uploadedImage }),
       });
-
       const result = await res.json();
-
-      if (!result.success) {
-        throw new Error(result.error || '保存に失敗しました');
-      }
+      if (!result.success) throw new Error(result.error || '保存に失敗しました');
 
       setStatus('saved');
-      setSuccessMessage(
-        `${formData.month}月${formData.day}日「${formData.title}」をGitHubに保存しました。Vercelが自動デプロイします。`
-      );
-
-      setFormData({
-        month: 1,
-        day: 1,
-        title: '',
-        originalText: '',
-        modernTranslation: '',
-        glossary: '',
-        background: '',
-        implication: '',
-      });
+      setSuccessMessage(`${formData.month}月${formData.day}日「${formData.title}」をGitHubに保存しました。Vercelが自動デプロイします。`);
+      setFormData({ month: 1, day: 1, title: '', originalText: '', modernTranslation: '', glossary: '', background: '', implication: '' });
       setUploadedImage(null);
-
-      setTimeout(() => {
-        setStatus('idle');
-        setSuccessMessage('');
-      }, 6000);
+      setTimeout(() => { setStatus('idle'); setSuccessMessage(''); }, 6000);
     } catch (err) {
       setStatus('error');
       setErrorMessage(err instanceof Error ? err.message : '保存に失敗しました');
@@ -225,34 +186,29 @@ export function RegistrationForm() {
   const canSave = !!formData.title && !!githubToken && !isAnalyzing && !isSaving;
 
   const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '10px 14px',
-    borderRadius: '10px',
-    backgroundColor: '#f5f1ec',
-    border: '1px solid rgba(107,83,68,0.15)',
-    fontSize: '14px',
-    color: '#3d3428',
-    outline: 'none',
+    width: '100%', padding: '10px 14px', borderRadius: '10px',
+    backgroundColor: '#f5f1ec', border: '1px solid rgba(107,83,68,0.15)',
+    fontSize: '14px', color: '#3d3428', outline: 'none',
     fontFamily: "'Noto Serif JP', serif",
   };
 
   const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: '12px',
-    color: '#8a7d6b',
-    marginBottom: '6px',
-    fontWeight: 500,
+    display: 'block', fontSize: '12px', color: '#8a7d6b',
+    marginBottom: '6px', fontWeight: 500,
   };
 
   const cardStyle: React.CSSProperties = {
-    backgroundColor: '#fff',
-    borderRadius: '14px',
+    backgroundColor: '#fff', borderRadius: '14px',
     border: '1px solid rgba(107,83,68,0.15)',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    padding: '20px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '20px',
   };
 
-  const daysCount = DAYS_IN_MONTH[formData.month] || 31;
+  // カレンダー生成
+  const daysCount = DAYS_IN_MONTH[calMonth] || 31;
+  const firstDay = getFirstDayOfMonth(calMonth);
+  const today = new Date();
+  const isToday = (d: number) => calMonth === (today.getMonth() + 1) && d === today.getDate();
+  const isSelected = (d: number) => calMonth === formData.month && d === formData.day;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -265,118 +221,132 @@ export function RegistrationForm() {
           </svg>
           <span style={{ fontWeight: 600, fontSize: '15px', color: '#3d3428' }}>API設定</span>
         </div>
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div>
             <label style={labelStyle}>Gemini APIキー（AI解析用）</label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Google Gemini APIキーを入力"
-              style={inputStyle}
-            />
+            <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="Google Gemini APIキーを入力" style={inputStyle} />
           </div>
           <div>
             <label style={labelStyle}>GitHub Personal Access Token（データ保存用）</label>
-            <input
-              type="password"
-              value={githubToken}
-              onChange={(e) => setGithubToken(e.target.value)}
-              placeholder="ghp_xxxx... (repoスコープが必要)"
-              style={inputStyle}
-            />
+            <input type="password" value={githubToken} onChange={(e) => setGithubToken(e.target.value)} placeholder="ghp_xxxx... (repoスコープが必要)" style={inputStyle} />
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={handleSaveTokens}
-              style={{
-                padding: '10px 20px',
-                borderRadius: '10px',
-                backgroundColor: '#6b5344',
-                color: '#fff',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}
-            >
-              保存
-            </button>
+            <button type="button" onClick={handleSaveTokens} style={{ padding: '10px 20px', borderRadius: '10px', backgroundColor: '#6b5344', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>保存</button>
             {(apiKey || githubToken) && (
-              <button
-                type="button"
-                onClick={handleClearTokens}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: '10px',
-                  backgroundColor: '#f5f1ec',
-                  color: '#6b5344',
-                  border: '1px solid rgba(107,83,68,0.15)',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
-              >
-                すべてクリア
-              </button>
+              <button type="button" onClick={handleClearTokens} style={{ padding: '10px 20px', borderRadius: '10px', backgroundColor: '#f5f1ec', color: '#6b5344', border: '1px solid rgba(107,83,68,0.15)', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>すべてクリア</button>
             )}
           </div>
         </div>
-        <p style={{ fontSize: '11px', color: '#8a7d6b', marginTop: '8px' }}>
-          キーはブラウザのlocalStorageに保存されます（サーバーには保存されません）
-        </p>
+        <p style={{ fontSize: '11px', color: '#8a7d6b', marginTop: '8px' }}>キーはブラウザのlocalStorageに保存されます（サーバーには保存されません）</p>
       </div>
 
       {/* ===== メインフォーム ===== */}
       <div style={{ ...cardStyle, padding: '24px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#3d3428', marginBottom: '20px' }}>
-          新規登録
-        </h3>
+        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#3d3428', marginBottom: '20px' }}>新規登録</h3>
 
         {errorMessage && (
-          <div style={{ padding: '10px 14px', borderRadius: '10px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: '13px', marginBottom: '16px' }}>
-            {errorMessage}
-          </div>
+          <div style={{ padding: '10px 14px', borderRadius: '10px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: '13px', marginBottom: '16px' }}>{errorMessage}</div>
         )}
         {successMessage && (
-          <div style={{ padding: '10px 14px', borderRadius: '10px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a', fontSize: '13px', marginBottom: '16px' }}>
-            {successMessage}
-          </div>
+          <div style={{ padding: '10px 14px', borderRadius: '10px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a', fontSize: '13px', marginBottom: '16px' }}>{successMessage}</div>
         )}
 
-        {/* Step 1: 画像アップロード */}
+        {/* Step 1: 画像 + カレンダー（左右2列） */}
         <div style={{ marginBottom: '20px' }}>
-          <label style={labelStyle}>Step 1: 書籍スクリーンショット</label>
-          <div
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={handleImageDrop}
-            onClick={() => document.getElementById('image-input')?.click()}
-            style={{
-              border: '2px dashed rgba(107,83,68,0.2)',
-              borderRadius: '14px',
-              padding: uploadedImage ? '12px' : '40px 20px',
-              textAlign: 'center',
-              cursor: 'pointer',
-              backgroundColor: uploadedImage ? '#fff' : '#faf8f5',
-            }}
-          >
-            {uploadedImage ? (
-              <div>
-                <img src={uploadedImage} alt="Uploaded" style={{ maxHeight: '200px', margin: '0 auto', borderRadius: '10px', display: 'block' }} />
-                <p style={{ fontSize: '12px', color: '#8a7d6b', marginTop: '8px' }}>クリックで別の画像を選択</p>
+          <label style={labelStyle}>Step 1: 書籍スクリーンショット ＆ 日付選択</label>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            {/* 左: 画像アップロード */}
+            <div style={{ flex: 1 }}>
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleImageDrop}
+                onClick={() => document.getElementById('image-input')?.click()}
+                style={{
+                  border: '2px dashed rgba(107,83,68,0.2)', borderRadius: '14px',
+                  padding: uploadedImage ? '12px' : '30px 16px',
+                  textAlign: 'center', cursor: 'pointer',
+                  backgroundColor: uploadedImage ? '#fff' : '#faf8f5',
+                  minHeight: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                {uploadedImage ? (
+                  <div>
+                    <img src={uploadedImage} alt="Uploaded" style={{ maxHeight: '200px', margin: '0 auto', borderRadius: '10px', display: 'block' }} />
+                    <p style={{ fontSize: '11px', color: '#8a7d6b', marginTop: '6px' }}>クリックで変更</p>
+                  </div>
+                ) : (
+                  <div>
+                    <svg style={{ width: '28px', height: '28px', margin: '0 auto 6px', color: '#8a7d6b', display: 'block' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                    <p style={{ fontWeight: 500, color: '#3d3428', fontSize: '13px' }}>ドラッグ＆ドロップ</p>
+                    <p style={{ fontSize: '11px', color: '#8a7d6b', marginTop: '2px' }}>またはクリック</p>
+                  </div>
+                )}
+                <input type="file" accept="image/*" onChange={handleImageSelect} id="image-input" style={{ display: 'none' }} />
               </div>
-            ) : (
-              <div>
-                <svg style={{ width: '32px', height: '32px', margin: '0 auto 8px', color: '#8a7d6b', display: 'block' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                </svg>
-                <p style={{ fontWeight: 500, color: '#3d3428', fontSize: '14px' }}>画像をドラッグ＆ドロップ</p>
-                <p style={{ fontSize: '12px', color: '#8a7d6b', marginTop: '4px' }}>またはクリックしてファイルを選択</p>
+            </div>
+
+            {/* 右: Googleカレンダー風ミニカレンダー */}
+            <div style={{
+              width: '280px', flexShrink: 0,
+              border: '1px solid rgba(107,83,68,0.15)', borderRadius: '14px',
+              padding: '14px', backgroundColor: '#fff',
+            }}>
+              {/* ヘッダー: 年月 + 矢印 */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <span style={{ fontWeight: 600, fontSize: '14px', color: '#3d3428' }}>2026年{calMonth}月</span>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button type="button" onClick={handleCalPrev} style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '14px', color: '#6b5344', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
+                  <button type="button" onClick={handleCalNext} style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '14px', color: '#6b5344', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
+                </div>
               </div>
-            )}
-            <input type="file" accept="image/*" onChange={handleImageSelect} id="image-input" style={{ display: 'none' }} />
+
+              {/* 曜日ヘッダー */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: '4px' }}>
+                {DAY_LABELS.map((label) => (
+                  <div key={label} style={{ fontSize: '11px', color: '#8a7d6b', fontWeight: 500, padding: '2px 0' }}>{label}</div>
+                ))}
+              </div>
+
+              {/* 日付グリッド */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center' }}>
+                {/* 空白セル */}
+                {Array.from({ length: firstDay }, (_, i) => (
+                  <div key={`empty-${i}`} />
+                ))}
+                {/* 日 */}
+                {Array.from({ length: daysCount }, (_, i) => i + 1).map((d) => {
+                  const sel = isSelected(d);
+                  const td = isToday(d);
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => handleCalDaySelect(d)}
+                      style={{
+                        width: '32px', height: '32px', margin: '1px auto',
+                        borderRadius: '50%',
+                        border: td && !sel ? '1px solid #4285f4' : 'none',
+                        backgroundColor: sel ? '#6b5344' : 'transparent',
+                        color: sel ? '#fff' : td ? '#4285f4' : '#3d3428',
+                        fontWeight: sel || td ? 600 : 400,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      {d}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* 選択表示 */}
+              <div style={{ marginTop: '8px', textAlign: 'center', fontSize: '13px', color: '#6b5344', fontWeight: 600 }}>
+                {formData.month}月{formData.day}日
+              </div>
+            </div>
           </div>
         </div>
 
@@ -419,89 +389,26 @@ export function RegistrationForm() {
         <div>
           <label style={labelStyle}>Step 3: 内容確認・編集</label>
 
-          {/* 月選択（1〜12のボタン） */}
-          <div style={{ marginBottom: '12px' }}>
-            <label style={labelStyle}>月</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px' }}>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => handleMonthSelect(m)}
-                  style={{
-                    padding: '8px 0',
-                    borderRadius: '8px',
-                    border: formData.month === m ? '2px solid #6b5344' : '1px solid rgba(107,83,68,0.15)',
-                    backgroundColor: formData.month === m ? '#6b5344' : '#f5f1ec',
-                    color: formData.month === m ? '#fff' : '#3d3428',
-                    fontWeight: formData.month === m ? 600 : 400,
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {m}月
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 日選択（グリッド） */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>日（{formData.month}月）</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
-              {Array.from({ length: daysCount }, (_, i) => i + 1).map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => handleDaySelect(d)}
-                  style={{
-                    padding: '6px 0',
-                    borderRadius: '6px',
-                    border: formData.day === d ? '2px solid #6b5344' : '1px solid rgba(107,83,68,0.1)',
-                    backgroundColor: formData.day === d ? '#6b5344' : 'transparent',
-                    color: formData.day === d ? '#fff' : '#3d3428',
-                    fontWeight: formData.day === d ? 600 : 400,
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* タイトル */}
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>タイトル</label>
             <input type="text" name="title" value={formData.title} onChange={handleInputChange} placeholder="例: 至誠神の如し" style={inputStyle} />
           </div>
-
-          {/* 原文 */}
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>原文</label>
             <textarea name="originalText" value={formData.originalText} onChange={handleInputChange} rows={4} placeholder="書籍から抽出された原文" style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
-
-          {/* 現代語訳 */}
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>現代語訳</label>
             <textarea name="modernTranslation" value={formData.modernTranslation} onChange={handleInputChange} rows={4} placeholder="AIが生成した現代語訳" style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
-
-          {/* 語句解説 */}
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>語句解説</label>
             <textarea name="glossary" value={formData.glossary} onChange={handleInputChange} rows={3} placeholder="AIが生成した語句解説" style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
-
-          {/* 補足・背景 */}
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>補足・背景</label>
             <textarea name="background" value={formData.background} onChange={handleInputChange} rows={3} placeholder="AIが生成した補足・背景情報" style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
-
-          {/* 示唆 */}
           <div style={{ marginBottom: '20px' }}>
             <label style={labelStyle}>仕事／暮らしへの示唆</label>
             <textarea name="implication" value={formData.implication} onChange={handleInputChange} rows={3} placeholder="AIが生成した示唆" style={{ ...inputStyle, resize: 'vertical' }} />
@@ -524,9 +431,7 @@ export function RegistrationForm() {
           {isSaving ? '保存中...' : `${formData.month}月${formData.day}日「${formData.title || '---'}」を登録`}
         </button>
         {!githubToken && (
-          <p style={{ fontSize: '11px', color: '#dc2626', marginTop: '6px', textAlign: 'center' }}>
-            GitHubトークンを設定すると登録が有効になります
-          </p>
+          <p style={{ fontSize: '11px', color: '#dc2626', marginTop: '6px', textAlign: 'center' }}>GitHubトークンを設定すると登録が有効になります</p>
         )}
       </div>
 
