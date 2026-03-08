@@ -22,8 +22,6 @@ export function RegistrationForm() {
     }
     return '';
   });
-  const [showApiKey, setShowApiKey] = useState(false);
-
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -234,31 +232,14 @@ export function RegistrationForm() {
           <span style={{ fontWeight: 600, fontSize: '15px', color: '#3d3428' }}>Gemini APIキー</span>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <div style={{ flex: 1, position: 'relative' }}>
+          <div style={{ flex: 1 }}>
             <input
-              type={showApiKey ? 'text' : 'password'}
+              type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="Google Gemini APIキーを入力"
-              style={{ ...inputStyle, paddingRight: '40px' }}
+              style={inputStyle}
             />
-            <button
-              type="button"
-              onClick={() => setShowApiKey(!showApiKey)}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#8a7d6b',
-                fontSize: '12px',
-              }}
-            >
-              {showApiKey ? '隠す' : '表示'}
-            </button>
           </div>
           <button
             type="button"

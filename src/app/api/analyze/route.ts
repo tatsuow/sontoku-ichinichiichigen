@@ -92,7 +92,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Analyze API error:', error);
-    const message = error instanceof Error ? error.message : '解析に失敗しました';
+    let message = '解析に失敗しました';
+    if (error instanceof Error) {
+      const msg = error.message;
+      if (msg.includes('429') || msg.includes('Too Many Requests') || msg.includes('quota')) {
+        message = 'APIのリクエスト上限に達しました。しばらく待ってから再度お試しください。（無料プランの場合、1分あたりのリクエスト数に制限があります）';
+      } else if (msg.includes('401') || msg.includes('403') || msg.includes('API_KEY_INVALID') || msg.includes('PERMISSION_DENIED')) {
+        message = 'APIキーが無効です。正しいGemini APIキーを入力してください。';
+      } else if (msg.includes('404') || msg.includes('not found')) {
+        message = 'AIモデルが見つかりません。しばらく待ってから再度お試しください。';
+      } else {
+        message = `解析エラー: ${msg.substring(0, 100)}`;
+      }
+    }
     return NextResponse.json(
       { success: false, error: message },
       { status: 500 }
