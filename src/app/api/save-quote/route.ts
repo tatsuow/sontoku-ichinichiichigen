@@ -182,7 +182,7 @@ ${implication || ''}
     // 画像の保存（画像データがある場合のみ）
     let savedImageFilename: string | null = null;
     if (imageData && typeof imageData === 'string') {
-      const imgMatch = imageData.match(/^data:image\/([\w+]+);base64,(.+)$/s);
+      const imgMatch = imageData.match(/^data:image\/([\w+]+);base64,(.+)$/);
       if (imgMatch) {
         const ext = imgMatch[1] === 'jpeg' ? 'jpg' : imgMatch[1];
         const imgBase64 = imgMatch[2];
