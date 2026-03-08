@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const base64Data = match[2];
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `あなたは二宮尊徳（二宮金次郎）の専門家です。
 この画像は書籍「二宮尊徳一日一言」（致知出版社）のページのスクリーンショットです。
