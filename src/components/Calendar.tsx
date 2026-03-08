@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface CalendarQuote {
@@ -33,6 +33,13 @@ export function Calendar({ quotes, todayMonth, todayDay, selectedMonth, selected
   // 選択された月がある場合はその月を表示、なければ今日の月
   const [displayMonth, setDisplayMonth] = useState(selectedMonth ?? todayMonth);
 
+  // クライアント側の実際の「今日」を使う（サーバーとのタイムゾーン差を解消）
+  const [clientToday, setClientToday] = useState({ month: todayMonth, day: todayDay });
+  useEffect(() => {
+    const now = new Date();
+    setClientToday({ month: now.getMonth() + 1, day: now.getDate() });
+  }, []);
+
   // このmonthに登録されているquotesのマップ
   const quoteMap = new Map<number, string>();
   quotes
@@ -49,10 +56,10 @@ export function Calendar({ quotes, todayMonth, todayDay, selectedMonth, selected
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
   const handlePrevMonth = () => {
-    setDisplayMonth((m) => (m === 1 ? 12 : m - 1));
+    setDisplayMonth((m) => (m <= 1 ? 12 : m - 1));
   };
   const handleNextMonth = () => {
-    setDisplayMonth((m) => (m === 12 ? 1 : m + 1));
+    setDisplayMonth((m) => (m >= 12 ? 1 : m + 1));
   };
 
   return (
@@ -119,7 +126,7 @@ export function Calendar({ quotes, todayMonth, todayDay, selectedMonth, selected
               return <div key={`empty-${idx}`} className="h-16" />;
             }
 
-            const isToday = day === todayDay && displayMonth === todayMonth;
+            const isToday = day === clientToday.day && displayMonth === clientToday.month;
             const isSelected = day === selectedDay && displayMonth === selectedMonth;
             const hasQuote = quoteMap.has(day);
             const quoteTitle = quoteMap.get(day);

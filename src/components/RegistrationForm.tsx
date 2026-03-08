@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 interface FormData {
   month: number;
@@ -15,50 +15,52 @@ interface FormData {
 
 type Status = 'idle' | 'analyzing' | 'saving' | 'saved' | 'error';
 
-const DAYS_IN_MONTH: Record<number, number> = {
-  1: 31, 2: 29, 3: 31, 4: 30, 5: 31, 6: 30,
-  7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31,
-};
-
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
 
-// 2026年のその月の1日の曜日を返す（0=日曜日）
-function getFirstDayOfMonth(month: number): number {
-  return new Date(2026, month - 1, 1).getDay();
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
 }
 
-export function RegistrationForm() {
-  const [apiKey, setApiKey] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('gemini-api-key') || '';
-    }
-    return '';
-  });
-  const [githubToken, setGithubToken] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('github-token') || '';
-    }
-    return '';
-  });
+function getFirstDayOfMonth(year: number, month: number): number {
+  return new Date(year, month - 1, 1).getDay();
+}
 
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [status, setStatus] = useState<Status>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-
-  const [formData, setFormData] = useState<FormData>({
-    month: new Date().getMonth() + 1,
-    day: new Date().getDate(),
+function getInitialFormData(): FormData {
+  const now = new Date();
+  return {
+    month: now.getMonth() + 1,
+    day: now.getDate(),
     title: '',
     originalText: '',
     modernTranslation: '',
     glossary: '',
     background: '',
     implication: '',
-  });
+  };
+}
 
-  // カレンダー表示月
-  const [calMonth, setCalMonth] = useState(formData.month);
+export function RegistrationForm() {
+  const [apiKey, setApiKey] = useState('');
+  const [githubToken, setGithubToken] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  // クライアント側でのみlocalStorageから読み込む
+  useEffect(() => {
+    setApiKey(localStorage.getItem('gemini-api-key') || '');
+    setGithubToken(localStorage.getItem('github-token') || '');
+    setMounted(true);
+  }, []);
+
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [status, setStatus] = useState<Status>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const [formData, setFormData] = useState<FormData>(getInitialFormData);
+
+  // カレンダー表示月・年
+  const [calMonth, setCalMonth] = useState(() => new Date().getMonth() + 1);
+  const [calYear, setCalYear] = useState(() => new Date().getFullYear());
 
   // トークン保存
   const handleSaveTokens = () => {
@@ -110,9 +112,19 @@ export function RegistrationForm() {
     setFormData((prev) => ({ ...prev, month: calMonth, day: d }));
   };
 
-  // カレンダー月移動
-  const handleCalPrev = () => setCalMonth((m) => (m <= 1 ? 12 : m - 1));
-  const handleCalNext = () => setCalMonth((m) => (m >= 12 ? 1 : m + 1));
+  // カレンダー月移動（年もまたぐ）
+  const handleCalPrev = () => {
+    setCalMonth((m) => {
+      if (m <= 1) { setCalYear((y) => y - 1); return 12; }
+      return m - 1;
+    });
+  };
+  const handleCalNext = () => {
+    setCalMonth((m) => {
+      if (m >= 12) { setCalYear((y) => y + 1); return 1; }
+      return m + 1;
+    });
+  };
 
   // AI解析
   const handleAnalyze = async () => {
@@ -184,7 +196,11 @@ export function RegistrationForm() {
 
       setStatus('saved');
       setSuccessMessage(`${formData.month}月${formData.day}日「${formData.title}」をGitHubに保存しました。Vercelが自動デプロイします。`);
-      setFormData({ month: 1, day: 1, title: '', originalText: '', modernTranslation: '', glossary: '', background: '', implication: '' });
+      // 今日の日付にリセット（1月1日ではなく）
+      const resetDate = getInitialFormData();
+      setFormData(resetDate);
+      setCalMonth(resetDate.month);
+      setCalYear(new Date().getFullYear());
       setUploadedImage(null);
       setTimeout(() => { setStatus('idle'); setSuccessMessage(''); }, 6000);
     } catch (err) {
@@ -216,11 +232,14 @@ export function RegistrationForm() {
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '20px',
   };
 
-  // カレンダー生成
-  const daysCount = DAYS_IN_MONTH[calMonth] || 31;
-  const firstDay = getFirstDayOfMonth(calMonth);
+  // カレンダー生成（動的年対応）
+  const daysCount = getDaysInMonth(calYear, calMonth);
+  const firstDay = getFirstDayOfMonth(calYear, calMonth);
   const today = new Date();
-  const isToday = (d: number) => calMonth === (today.getMonth() + 1) && d === today.getDate();
+  const todayYear = today.getFullYear();
+  const todayMonth = today.getMonth() + 1;
+  const todayDate = today.getDate();
+  const isToday = (d: number) => calYear === todayYear && calMonth === todayMonth && d === todayDate;
   const isSelected = (d: number) => calMonth === formData.month && d === formData.day;
 
   return (
@@ -308,7 +327,7 @@ export function RegistrationForm() {
             }}>
               {/* ヘッダー: 年月 + 矢印 */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontWeight: 600, fontSize: '14px', color: '#3d3428' }}>2026年{calMonth}月</span>
+                <span style={{ fontWeight: 600, fontSize: '14px', color: '#3d3428' }}>{calYear}年{calMonth}月</span>
                 <div style={{ display: 'flex', gap: '4px' }}>
                   <button type="button" onClick={handleCalPrev} style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '14px', color: '#6b5344', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
                   <button type="button" onClick={handleCalNext} style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '14px', color: '#6b5344', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
