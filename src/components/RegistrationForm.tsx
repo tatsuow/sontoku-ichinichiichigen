@@ -15,6 +15,11 @@ interface FormData {
 
 type Status = 'idle' | 'analyzing' | 'saving' | 'saved' | 'error';
 
+const DAYS_IN_MONTH: Record<number, number> = {
+  1: 31, 2: 29, 3: 31, 4: 30, 5: 31, 6: 30,
+  7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31,
+};
+
 export function RegistrationForm() {
   const [apiKey, setApiKey] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -22,6 +27,13 @@ export function RegistrationForm() {
     }
     return '';
   });
+  const [githubToken, setGithubToken] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('github-token') || '';
+    }
+    return '';
+  });
+
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -38,16 +50,19 @@ export function RegistrationForm() {
     implication: '',
   });
 
-  // APIキー保存
-  const handleSaveApiKey = () => {
+  // トークン保存
+  const handleSaveTokens = () => {
     localStorage.setItem('gemini-api-key', apiKey);
-    setSuccessMessage('APIキーを保存しました');
+    localStorage.setItem('github-token', githubToken);
+    setSuccessMessage('設定を保存しました');
     setTimeout(() => setSuccessMessage(''), 2000);
   };
 
-  const handleClearApiKey = () => {
+  const handleClearTokens = () => {
     localStorage.removeItem('gemini-api-key');
+    localStorage.removeItem('github-token');
     setApiKey('');
+    setGithubToken('');
   };
 
   // 画像アップロード
@@ -74,13 +89,23 @@ export function RegistrationForm() {
 
   // フォーム入力
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === 'month' || name === 'day' ? parseInt(value) : value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // 月選択
+  const handleMonthSelect = (m: number) => {
+    setFormData((prev) => {
+      const maxDay = DAYS_IN_MONTH[m];
+      return { ...prev, month: m, day: prev.day > maxDay ? maxDay : prev.day };
+    });
+  };
+
+  // 日選択
+  const handleDaySelect = (d: number) => {
+    setFormData((prev) => ({ ...prev, day: d }));
   };
 
   // AI解析
@@ -134,10 +159,14 @@ export function RegistrationForm() {
     }
   };
 
-  // 保存
+  // 保存（GitHub API経由）
   const handleSave = async () => {
     if (!formData.title) {
       setErrorMessage('タイトルは必須です');
+      return;
+    }
+    if (!githubToken) {
+      setErrorMessage('GitHubトークンを入力してください');
       return;
     }
 
@@ -147,7 +176,10 @@ export function RegistrationForm() {
     try {
       const res = await fetch('/api/save-quote', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-GitHub-Token': githubToken,
+        },
         body: JSON.stringify({
           ...formData,
           imageData: uploadedImage,
@@ -162,10 +194,9 @@ export function RegistrationForm() {
 
       setStatus('saved');
       setSuccessMessage(
-        `${formData.month}月${formData.day}日「${formData.title}」を保存しました（${result.filename}）`
+        `${formData.month}月${formData.day}日「${formData.title}」をGitHubに保存しました。Vercelが自動デプロイします。`
       );
 
-      // フォームリセット
       setFormData({
         month: 1,
         day: 1,
@@ -181,7 +212,7 @@ export function RegistrationForm() {
       setTimeout(() => {
         setStatus('idle');
         setSuccessMessage('');
-      }, 5000);
+      }, 6000);
     } catch (err) {
       setStatus('error');
       setErrorMessage(err instanceof Error ? err.message : '保存に失敗しました');
@@ -191,9 +222,8 @@ export function RegistrationForm() {
   const isAnalyzing = status === 'analyzing';
   const isSaving = status === 'saving';
   const canAnalyze = !!apiKey && !!uploadedImage && !isAnalyzing && !isSaving;
-  const canSave = !!formData.title && !isAnalyzing && !isSaving;
+  const canSave = !!formData.title && !!githubToken && !isAnalyzing && !isSaving;
 
-  // 共通スタイル
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '10px 14px',
@@ -214,25 +244,31 @@ export function RegistrationForm() {
     fontWeight: 500,
   };
 
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: '#fff',
+    borderRadius: '14px',
+    border: '1px solid rgba(107,83,68,0.15)',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    padding: '20px',
+  };
+
+  const daysCount = DAYS_IN_MONTH[formData.month] || 31;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-      {/* ===== APIキー設定 ===== */}
-      <div style={{
-        backgroundColor: '#fff',
-        borderRadius: '14px',
-        border: '1px solid rgba(107,83,68,0.15)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        padding: '20px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+      {/* ===== API設定 ===== */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <svg style={{ width: '18px', height: '18px', color: '#8a7d6b' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
           </svg>
-          <span style={{ fontWeight: 600, fontSize: '15px', color: '#3d3428' }}>Gemini APIキー</span>
+          <span style={{ fontWeight: 600, fontSize: '15px', color: '#3d3428' }}>API設定</span>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <div style={{ flex: 1 }}>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div>
+            <label style={labelStyle}>Gemini APIキー（AI解析用）</label>
             <input
               type="password"
               value={apiKey}
@@ -241,84 +277,71 @@ export function RegistrationForm() {
               style={inputStyle}
             />
           </div>
-          <button
-            type="button"
-            onClick={handleSaveApiKey}
-            style={{
-              padding: '10px 16px',
-              borderRadius: '10px',
-              backgroundColor: '#6b5344',
-              color: '#fff',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 500,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            保存
-          </button>
-          {apiKey && (
+          <div>
+            <label style={labelStyle}>GitHub Personal Access Token（データ保存用）</label>
+            <input
+              type="password"
+              value={githubToken}
+              onChange={(e) => setGithubToken(e.target.value)}
+              placeholder="ghp_xxxx... (repoスコープが必要)"
+              style={inputStyle}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button
               type="button"
-              onClick={handleClearApiKey}
+              onClick={handleSaveTokens}
               style={{
-                padding: '10px 16px',
+                padding: '10px 20px',
                 borderRadius: '10px',
-                backgroundColor: '#f5f1ec',
-                color: '#6b5344',
-                border: '1px solid rgba(107,83,68,0.15)',
+                backgroundColor: '#6b5344',
+                color: '#fff',
+                border: 'none',
                 cursor: 'pointer',
                 fontSize: '13px',
                 fontWeight: 500,
-                whiteSpace: 'nowrap',
               }}
             >
-              クリア
+              保存
             </button>
-          )}
+            {(apiKey || githubToken) && (
+              <button
+                type="button"
+                onClick={handleClearTokens}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  backgroundColor: '#f5f1ec',
+                  color: '#6b5344',
+                  border: '1px solid rgba(107,83,68,0.15)',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                }}
+              >
+                すべてクリア
+              </button>
+            )}
+          </div>
         </div>
         <p style={{ fontSize: '11px', color: '#8a7d6b', marginTop: '8px' }}>
-          APIキーはブラウザのlocalStorageに保存されます（サーバーには送信されません）
+          キーはブラウザのlocalStorageに保存されます（サーバーには保存されません）
         </p>
       </div>
 
       {/* ===== メインフォーム ===== */}
-      <div style={{
-        backgroundColor: '#fff',
-        borderRadius: '14px',
-        border: '1px solid rgba(107,83,68,0.15)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        padding: '24px',
-      }}>
+      <div style={{ ...cardStyle, padding: '24px' }}>
         <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#3d3428', marginBottom: '20px' }}>
           新規登録
         </h3>
 
-        {/* ステータスメッセージ */}
         {errorMessage && (
-          <div style={{
-            padding: '10px 14px',
-            borderRadius: '10px',
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            color: '#dc2626',
-            fontSize: '13px',
-            marginBottom: '16px',
-          }}>
+          <div style={{ padding: '10px 14px', borderRadius: '10px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: '13px', marginBottom: '16px' }}>
             {errorMessage}
           </div>
         )}
         {successMessage && (
-          <div style={{
-            padding: '10px 14px',
-            borderRadius: '10px',
-            backgroundColor: '#f0fdf4',
-            border: '1px solid #bbf7d0',
-            color: '#16a34a',
-            fontSize: '13px',
-            marginBottom: '16px',
-          }}>
+          <div style={{ padding: '10px 14px', borderRadius: '10px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a', fontSize: '13px', marginBottom: '16px' }}>
             {successMessage}
           </div>
         )}
@@ -337,44 +360,27 @@ export function RegistrationForm() {
               textAlign: 'center',
               cursor: 'pointer',
               backgroundColor: uploadedImage ? '#fff' : '#faf8f5',
-              transition: 'background-color 0.2s',
             }}
           >
             {uploadedImage ? (
               <div>
-                <img
-                  src={uploadedImage}
-                  alt="Uploaded"
-                  style={{ maxHeight: '200px', margin: '0 auto', borderRadius: '10px', display: 'block' }}
-                />
-                <p style={{ fontSize: '12px', color: '#8a7d6b', marginTop: '8px' }}>
-                  クリックで別の画像を選択
-                </p>
+                <img src={uploadedImage} alt="Uploaded" style={{ maxHeight: '200px', margin: '0 auto', borderRadius: '10px', display: 'block' }} />
+                <p style={{ fontSize: '12px', color: '#8a7d6b', marginTop: '8px' }}>クリックで別の画像を選択</p>
               </div>
             ) : (
               <div>
                 <svg style={{ width: '32px', height: '32px', margin: '0 auto 8px', color: '#8a7d6b', display: 'block' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                 </svg>
-                <p style={{ fontWeight: 500, color: '#3d3428', fontSize: '14px' }}>
-                  画像をドラッグ＆ドロップ
-                </p>
-                <p style={{ fontSize: '12px', color: '#8a7d6b', marginTop: '4px' }}>
-                  またはクリックしてファイルを選択
-                </p>
+                <p style={{ fontWeight: 500, color: '#3d3428', fontSize: '14px' }}>画像をドラッグ＆ドロップ</p>
+                <p style={{ fontSize: '12px', color: '#8a7d6b', marginTop: '4px' }}>またはクリックしてファイルを選択</p>
               </div>
             )}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageSelect}
-              id="image-input"
-              style={{ display: 'none' }}
-            />
+            <input type="file" accept="image/*" onChange={handleImageSelect} id="image-input" style={{ display: 'none' }} />
           </div>
         </div>
 
-        {/* Step 2: AI解析ボタン */}
+        {/* Step 2: AI解析 */}
         <div style={{ marginBottom: '24px' }}>
           <label style={labelStyle}>Step 2: AI自動解析</label>
           <button
@@ -382,35 +388,17 @@ export function RegistrationForm() {
             onClick={handleAnalyze}
             disabled={!canAnalyze}
             style={{
-              width: '100%',
-              padding: '12px',
-              borderRadius: '10px',
-              border: 'none',
-              fontWeight: 600,
-              fontSize: '14px',
+              width: '100%', padding: '12px', borderRadius: '10px', border: 'none',
+              fontWeight: 600, fontSize: '14px',
               cursor: canAnalyze ? 'pointer' : 'not-allowed',
-              background: canAnalyze
-                ? 'linear-gradient(135deg, #7f22fe, #4f39f6)'
-                : 'rgba(107,83,68,0.15)',
+              background: canAnalyze ? 'linear-gradient(135deg, #7f22fe, #4f39f6)' : 'rgba(107,83,68,0.15)',
               color: canAnalyze ? '#fff' : '#8a7d6b',
-              transition: 'opacity 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             }}
           >
             {isAnalyzing ? (
               <>
-                <span style={{
-                  width: '16px',
-                  height: '16px',
-                  border: '2px solid rgba(255,255,255,0.3)',
-                  borderTopColor: '#fff',
-                  borderRadius: '50%',
-                  display: 'inline-block',
-                  animation: 'spin 0.8s linear infinite',
-                }} />
+                <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }} />
                 解析中...
               </>
             ) : (
@@ -422,121 +410,101 @@ export function RegistrationForm() {
               </>
             )}
           </button>
-          {!apiKey && (
-            <p style={{ fontSize: '11px', color: '#dc2626', marginTop: '6px' }}>
-              APIキーを上の欄に入力してください
-            </p>
-          )}
-          {apiKey && !uploadedImage && (
-            <p style={{ fontSize: '11px', color: '#8a7d6b', marginTop: '6px' }}>
-              画像をアップロードすると解析ボタンが有効になります
-            </p>
-          )}
+          {!apiKey && <p style={{ fontSize: '11px', color: '#dc2626', marginTop: '6px' }}>Gemini APIキーを設定してください</p>}
         </div>
 
-        {/* 区切り線 */}
         <div style={{ height: '1px', backgroundColor: 'rgba(107,83,68,0.15)', margin: '0 0 20px' }} />
 
-        {/* Step 3: フォームフィールド */}
+        {/* Step 3: フォーム */}
         <div>
           <label style={labelStyle}>Step 3: 内容確認・編集</label>
 
-          {/* 月・日 */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-            <div>
-              <label style={labelStyle}>月</label>
-              <select name="month" value={formData.month} onChange={handleInputChange} style={inputStyle}>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                  <option key={m} value={m}>{m}月</option>
-                ))}
-              </select>
+          {/* 月選択（1〜12のボタン） */}
+          <div style={{ marginBottom: '12px' }}>
+            <label style={labelStyle}>月</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px' }}>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => handleMonthSelect(m)}
+                  style={{
+                    padding: '8px 0',
+                    borderRadius: '8px',
+                    border: formData.month === m ? '2px solid #6b5344' : '1px solid rgba(107,83,68,0.15)',
+                    backgroundColor: formData.month === m ? '#6b5344' : '#f5f1ec',
+                    color: formData.month === m ? '#fff' : '#3d3428',
+                    fontWeight: formData.month === m ? 600 : 400,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {m}月
+                </button>
+              ))}
             </div>
-            <div>
-              <label style={labelStyle}>日</label>
-              <select name="day" value={formData.day} onChange={handleInputChange} style={inputStyle}>
-                {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                  <option key={d} value={d}>{d}日</option>
-                ))}
-              </select>
+          </div>
+
+          {/* 日選択（グリッド） */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>日（{formData.month}月）</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+              {Array.from({ length: daysCount }, (_, i) => i + 1).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => handleDaySelect(d)}
+                  style={{
+                    padding: '6px 0',
+                    borderRadius: '6px',
+                    border: formData.day === d ? '2px solid #6b5344' : '1px solid rgba(107,83,68,0.1)',
+                    backgroundColor: formData.day === d ? '#6b5344' : 'transparent',
+                    color: formData.day === d ? '#fff' : '#3d3428',
+                    fontWeight: formData.day === d ? 600 : 400,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {d}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* タイトル */}
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>タイトル</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="例: 至誠神の如し"
-              style={inputStyle}
-            />
+            <input type="text" name="title" value={formData.title} onChange={handleInputChange} placeholder="例: 至誠神の如し" style={inputStyle} />
           </div>
 
           {/* 原文 */}
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>原文</label>
-            <textarea
-              name="originalText"
-              value={formData.originalText}
-              onChange={handleInputChange}
-              rows={4}
-              placeholder="書籍から抽出された原文"
-              style={{ ...inputStyle, resize: 'vertical' }}
-            />
+            <textarea name="originalText" value={formData.originalText} onChange={handleInputChange} rows={4} placeholder="書籍から抽出された原文" style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
 
           {/* 現代語訳 */}
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>現代語訳</label>
-            <textarea
-              name="modernTranslation"
-              value={formData.modernTranslation}
-              onChange={handleInputChange}
-              rows={4}
-              placeholder="AIが生成した現代語訳"
-              style={{ ...inputStyle, resize: 'vertical' }}
-            />
+            <textarea name="modernTranslation" value={formData.modernTranslation} onChange={handleInputChange} rows={4} placeholder="AIが生成した現代語訳" style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
 
           {/* 語句解説 */}
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>語句解説</label>
-            <textarea
-              name="glossary"
-              value={formData.glossary}
-              onChange={handleInputChange}
-              rows={3}
-              placeholder="AIが生成した語句解説"
-              style={{ ...inputStyle, resize: 'vertical' }}
-            />
+            <textarea name="glossary" value={formData.glossary} onChange={handleInputChange} rows={3} placeholder="AIが生成した語句解説" style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
 
           {/* 補足・背景 */}
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>補足・背景</label>
-            <textarea
-              name="background"
-              value={formData.background}
-              onChange={handleInputChange}
-              rows={3}
-              placeholder="AIが生成した補足・背景情報"
-              style={{ ...inputStyle, resize: 'vertical' }}
-            />
+            <textarea name="background" value={formData.background} onChange={handleInputChange} rows={3} placeholder="AIが生成した補足・背景情報" style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
 
           {/* 示唆 */}
           <div style={{ marginBottom: '20px' }}>
             <label style={labelStyle}>仕事／暮らしへの示唆</label>
-            <textarea
-              name="implication"
-              value={formData.implication}
-              onChange={handleInputChange}
-              rows={3}
-              placeholder="AIが生成した示唆"
-              style={{ ...inputStyle, resize: 'vertical' }}
-            />
+            <textarea name="implication" value={formData.implication} onChange={handleInputChange} rows={3} placeholder="AIが生成した示唆" style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
         </div>
 
@@ -546,28 +514,23 @@ export function RegistrationForm() {
           onClick={handleSave}
           disabled={!canSave}
           style={{
-            width: '100%',
-            padding: '14px',
-            borderRadius: '10px',
-            border: 'none',
+            width: '100%', padding: '14px', borderRadius: '10px', border: 'none',
             backgroundColor: canSave ? '#6b5344' : 'rgba(107,83,68,0.15)',
             color: canSave ? '#fff' : '#8a7d6b',
-            fontWeight: 600,
-            fontSize: '15px',
+            fontWeight: 600, fontSize: '15px',
             cursor: canSave ? 'pointer' : 'not-allowed',
-            transition: 'opacity 0.2s',
           }}
         >
           {isSaving ? '保存中...' : `${formData.month}月${formData.day}日「${formData.title || '---'}」を登録`}
         </button>
+        {!githubToken && (
+          <p style={{ fontSize: '11px', color: '#dc2626', marginTop: '6px', textAlign: 'center' }}>
+            GitHubトークンを設定すると登録が有効になります
+          </p>
+        )}
       </div>
 
-      {/* スピナーアニメーション */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      ` }} />
+      <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { to { transform: rotate(360deg); } }` }} />
     </div>
   );
 }

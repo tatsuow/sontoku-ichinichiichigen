@@ -11,10 +11,14 @@ export function QuotesTable({ quotes }: QuotesTableProps) {
   const [filterMonth, setFilterMonth] = useState<number | 'all'>('all');
 
   const filteredQuotes = useMemo(() => {
-    if (filterMonth === 'all') {
-      return quotes;
-    }
-    return quotes.filter((q) => q.month === filterMonth);
+    const filtered = filterMonth === 'all'
+      ? [...quotes]
+      : quotes.filter((q) => q.month === filterMonth);
+    // 日付降順（新しい順）
+    return filtered.sort((a, b) => {
+      if (a.month !== b.month) return b.month - a.month;
+      return b.day - a.day;
+    });
   }, [quotes, filterMonth]);
 
   const handleDelete = (id: string) => {
