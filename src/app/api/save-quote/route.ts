@@ -109,7 +109,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'リクエストの解析に失敗しました。画像サイズが大きすぎる可能性があります。' },
+        { status: 400 }
+      );
+    }
+
     const {
       month,
       day,
@@ -129,6 +138,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ファイル名に使えない文字を除去
+    const safeTitle = title.replace(/[/\\:*?"<>|]/g, '');
     const currentYear = new Date().getFullYear();
     const mm = String(month).padStart(2, '0');
     const dd = String(day).padStart(2, '0');
@@ -136,7 +147,7 @@ export async function POST(request: NextRequest) {
 
     // MDファイルの生成
     const mdContent = `---
-title: ${datePrefix}_${title}
+title: ${datePrefix}_${safeTitle}
 source: 二宮尊徳一日一言　致知出版社
 tags:
   - 二宮尊徳
@@ -158,20 +169,20 @@ ${background || ''}
 ${implication || ''}
 `;
 
-    const mdFilename = `${datePrefix}_${title}.md`;
+    const mdFilename = `${datePrefix}_${safeTitle}.md`;
 
     // MDファイルをGitHubにコミット
     await createOrUpdateFile(
       githubToken,
       `data/${mdFilename}`,
       mdContent,
-      `${mm}月${dd}日「${title}」を追加`
+      `${mm}月${dd}日「${safeTitle}」を追加`
     );
 
-    // 画像の保存
+    // 画像の保存（画像データがある場合のみ）
     let savedImageFilename: string | null = null;
-    if (imageData) {
-      const imgMatch = imageData.match(/^data:image\/(\w+);base64,(.+)$/);
+    if (imageData && typeof imageData === 'string') {
+      const imgMatch = imageData.match(/^data:image\/([\w+]+);base64,(.+)$/s);
       if (imgMatch) {
         const ext = imgMatch[1] === 'jpeg' ? 'jpg' : imgMatch[1];
         const imgBase64 = imgMatch[2];
@@ -199,9 +210,11 @@ ${implication || ''}
       if (msg.includes('Bad credentials') || msg.includes('401')) {
         message = 'GitHubトークンが無効です。正しいPersonal Access Tokenを入力してください。';
       } else if (msg.includes('Not Found') || msg.includes('404')) {
-        message = 'リポジトリが見つかりません。トークンの権限を確認してください。';
+        message = 'リポジトリが見つかりません。トークンの権限（Contents: Read and write）を確認してください。';
+      } else if (msg.includes('Resource not accessible')) {
+        message = 'トークンにリポジトリへの書き込み権限がありません。Fine-grained tokenの「Contents: Read and write」を確認してください。';
       } else {
-        message = `保存エラー: ${msg.substring(0, 150)}`;
+        message = `保存エラー: ${msg.substring(0, 200)}`;
       }
     }
     return NextResponse.json(

@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "src/app/api/save-quote/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/analyze/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}

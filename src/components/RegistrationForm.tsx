@@ -161,11 +161,24 @@ export function RegistrationForm() {
     setErrorMessage('');
 
     try {
+      const payload = { ...formData, imageData: uploadedImage };
       const res = await fetch('/api/save-quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-GitHub-Token': githubToken },
-        body: JSON.stringify({ ...formData, imageData: uploadedImage }),
+        body: JSON.stringify(payload),
       });
+
+      // レスポンスがJSONでない場合のハンドリング（Vercelのエラーページ等）
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(
+          res.status === 413
+            ? '画像サイズが大きすぎます。小さい画像を使用してください。'
+            : `サーバーエラー (${res.status}): ${text.substring(0, 100)}`
+        );
+      }
+
       const result = await res.json();
       if (!result.success) throw new Error(result.error || '保存に失敗しました');
 
