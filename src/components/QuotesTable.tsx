@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Quote } from '@/types/quote';
 
 interface QuotesTableProps {
@@ -8,7 +8,11 @@ interface QuotesTableProps {
 }
 
 export function QuotesTable({ quotes }: QuotesTableProps) {
-  const [filterMonth, setFilterMonth] = useState<number | 'all'>('all');
+  // 初期値はSSR安全な値、useEffectでクライアントの今月に上書き
+  const [filterMonth, setFilterMonth] = useState<number | 'all'>(1);
+  useEffect(() => {
+    setFilterMonth(new Date().getMonth() + 1);
+  }, []);
 
   const filteredQuotes = useMemo(() => {
     const filtered = filterMonth === 'all'
