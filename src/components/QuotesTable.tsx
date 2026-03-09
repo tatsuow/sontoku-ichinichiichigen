@@ -7,7 +7,10 @@ interface QuotesTableProps {
   quotes: Quote[];
 }
 
-export function QuotesTable({ quotes }: QuotesTableProps) {
+export function QuotesTable({ quotes: initialQuotes }: QuotesTableProps) {
+  const [quotes, setQuotes] = useState(initialQuotes);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
   // 初期値はSSR安全な値、useEffectでクライアントの今月に上書き
   const [filterMonth, setFilterMonth] = useState<number | 'all'>(1);
   useEffect(() => {
@@ -18,23 +21,48 @@ export function QuotesTable({ quotes }: QuotesTableProps) {
     const filtered = filterMonth === 'all'
       ? [...quotes]
       : quotes.filter((q) => q.month === filterMonth);
-    // 日付降順（新しい順）
     return filtered.sort((a, b) => {
       if (a.month !== b.month) return b.month - a.month;
       return b.day - a.day;
     });
   }, [quotes, filterMonth]);
 
-  const handleDelete = (id: string) => {
-    if (confirm(`本当に「${id}」を削除しますか？`)) {
-      console.log('Delete:', id);
-      alert('削除機能はクライアント側のUIデモです。');
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`「${title}」（${id}）を削除しますか？\nGitHubからMDファイルと画像が削除されます。`)) return;
+
+    const githubToken = localStorage.getItem('github-token');
+    if (!githubToken) {
+      alert('GitHubトークンが設定されていません。上部のAPI設定でトークンを保存してください。');
+      return;
+    }
+
+    setDeleting(id);
+    try {
+      const res = await fetch('/api/delete-quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-GitHub-Token': githubToken,
+        },
+        body: JSON.stringify({ id }),
+      });
+      const result = await res.json();
+      if (!result.success) {
+        alert(`削除に失敗しました: ${result.error}`);
+        return;
+      }
+      // ローカル一覧からも除去
+      setQuotes((prev) => prev.filter((q) => q.id !== id));
+      alert(`「${title}」を削除しました。Vercelが自動デプロイします。`);
+    } catch (err) {
+      alert(`削除中にエラーが発生しました: ${err instanceof Error ? err.message : '不明なエラー'}`);
+    } finally {
+      setDeleting(null);
     }
   };
 
   const handleEdit = (id: string) => {
-    console.log('Edit:', id);
-    alert('編集機能はクライアント側のUIデモです。');
+    alert('編集機能は今後実装予定です。');
   };
 
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -149,9 +177,11 @@ export function QuotesTable({ quotes }: QuotesTableProps) {
                       </svg>
                     </button>
                     <button
-                      onClick={() => handleDelete(quote.id)}
+                      onClick={() => handleDelete(quote.id, quote.frontmatter.title)}
+                      disabled={deleting === quote.id}
                       className="p-2 hover:bg-red-100 rounded transition-colors"
                       title="削除"
+                      style={{ opacity: deleting === quote.id ? 0.4 : 1 }}
                     >
                       <svg
                         className="w-4 h-4 text-red-500"
