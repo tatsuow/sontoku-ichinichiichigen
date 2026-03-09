@@ -140,7 +140,8 @@ export async function POST(request: NextRequest) {
 
     // ファイル名に使えない文字を除去
     const safeTitle = title.replace(/[/\\:*?"<>|]/g, '');
-    const currentYear = new Date().getFullYear();
+    const jstNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+    const currentYear = jstNow.getFullYear();
     const mm = String(month).padStart(2, '0');
     const dd = String(day).padStart(2, '0');
     const datePrefix = `${currentYear}-${mm}-${dd}`;

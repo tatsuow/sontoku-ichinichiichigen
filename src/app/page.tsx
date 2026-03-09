@@ -3,6 +3,7 @@ import { getTodayQuote, getAllQuotes, formatDateString } from '@/lib/quotes';
 import { markdownToHtml } from '@/lib/markdown';
 import { AccordionSection } from '@/components/AccordionSection';
 import { Calendar } from '@/components/Calendar';
+import { getJSTDate } from '@/lib/date';
 
 export const revalidate = 86400;
 
@@ -34,9 +35,9 @@ export default async function Home() {
     getAllQuotes(),
   ]);
 
-  const today = new Date();
-  const todayMonth = today.getMonth() + 1;
-  const todayDay = today.getDate();
+  const jst = getJSTDate();
+  const todayMonth = jst.month;
+  const todayDay = jst.day;
 
   const calendarQuotes = allQuotes.map((q) => ({
     month: q.month,

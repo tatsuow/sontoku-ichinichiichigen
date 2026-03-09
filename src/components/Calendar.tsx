@@ -29,16 +29,17 @@ function getFirstDayOfMonth(year: number, month: number): number {
 }
 
 export function Calendar({ quotes, todayMonth, todayDay, selectedMonth, selectedDay }: CalendarProps) {
-  const currentYear = new Date().getFullYear();
   // 選択された月がある場合はその月を表示、なければ今日の月
   const [displayMonth, setDisplayMonth] = useState(selectedMonth ?? todayMonth);
 
-  // クライアント側の実際の「今日」を使う（サーバーとのタイムゾーン差を解消）
-  const [clientToday, setClientToday] = useState({ month: todayMonth, day: todayDay });
+  // クライアント側の実際の「今日」と年を使う（サーバーとのタイムゾーン差を解消）
+  const [clientToday, setClientToday] = useState({ year: new Date().getFullYear(), month: todayMonth, day: todayDay });
   useEffect(() => {
     const now = new Date();
-    setClientToday({ month: now.getMonth() + 1, day: now.getDate() });
+    setClientToday({ year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() });
   }, []);
+
+  const currentYear = clientToday.year;
 
   // このmonthに登録されているquotesのマップ
   const quoteMap = new Map<number, string>();

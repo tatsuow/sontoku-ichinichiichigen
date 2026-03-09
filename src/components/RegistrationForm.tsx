@@ -25,42 +25,47 @@ function getFirstDayOfMonth(year: number, month: number): number {
   return new Date(year, month - 1, 1).getDay();
 }
 
-function getInitialFormData(): FormData {
-  const now = new Date();
-  return {
-    month: now.getMonth() + 1,
-    day: now.getDate(),
-    title: '',
-    originalText: '',
-    modernTranslation: '',
-    glossary: '',
-    background: '',
-    implication: '',
-  };
-}
+// SSR/クライアント両方で安全な初期値（useEffectで上書きされる）
+const INITIAL_FORM: FormData = {
+  month: 1,
+  day: 1,
+  title: '',
+  originalText: '',
+  modernTranslation: '',
+  glossary: '',
+  background: '',
+  implication: '',
+};
 
 export function RegistrationForm() {
   const [apiKey, setApiKey] = useState('');
   const [githubToken, setGithubToken] = useState('');
   const [mounted, setMounted] = useState(false);
 
-  // クライアント側でのみlocalStorageから読み込む
-  useEffect(() => {
-    setApiKey(localStorage.getItem('gemini-api-key') || '');
-    setGithubToken(localStorage.getItem('github-token') || '');
-    setMounted(true);
-  }, []);
-
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const [formData, setFormData] = useState<FormData>(getInitialFormData);
+  const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
 
-  // カレンダー表示月・年
-  const [calMonth, setCalMonth] = useState(() => new Date().getMonth() + 1);
-  const [calYear, setCalYear] = useState(() => new Date().getFullYear());
+  // カレンダー表示月・年（SSR安全な初期値、useEffectで上書き）
+  const [calMonth, setCalMonth] = useState(1);
+  const [calYear, setCalYear] = useState(2026);
+
+  // クライアント側でのみ「今日」の日付とlocalStorageを読み込む
+  useEffect(() => {
+    setApiKey(localStorage.getItem('gemini-api-key') || '');
+    setGithubToken(localStorage.getItem('github-token') || '');
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    const d = now.getDate();
+    const y = now.getFullYear();
+    setFormData((prev) => ({ ...prev, month: m, day: d }));
+    setCalMonth(m);
+    setCalYear(y);
+    setMounted(true);
+  }, []);
 
   // トークン保存
   const handleSaveTokens = () => {
@@ -154,7 +159,8 @@ export function RegistrationForm() {
         background: (d.background || '').replace(/\\n/g, '\n'),
         implication: (d.implication || '').replace(/\\n/g, '\n'),
       });
-      setCalMonth(d.month || 1);
+      setCalMonth(d.month || new Date().getMonth() + 1);
+      setCalYear(new Date().getFullYear());
       setStatus('idle');
       setSuccessMessage('AI解析が完了しました。内容を確認・編集して登録してください。');
       setTimeout(() => setSuccessMessage(''), 4000);
@@ -196,11 +202,15 @@ export function RegistrationForm() {
 
       setStatus('saved');
       setSuccessMessage(`${formData.month}月${formData.day}日「${formData.title}」をGitHubに保存しました。Vercelが自動デプロイします。`);
-      // 今日の日付にリセット（1月1日ではなく）
-      const resetDate = getInitialFormData();
-      setFormData(resetDate);
-      setCalMonth(resetDate.month);
-      setCalYear(new Date().getFullYear());
+      // 今日の日付にリセット
+      const now = new Date();
+      setFormData({
+        ...INITIAL_FORM,
+        month: now.getMonth() + 1,
+        day: now.getDate(),
+      });
+      setCalMonth(now.getMonth() + 1);
+      setCalYear(now.getFullYear());
       setUploadedImage(null);
       setTimeout(() => { setStatus('idle'); setSuccessMessage(''); }, 6000);
     } catch (err) {
@@ -235,11 +245,13 @@ export function RegistrationForm() {
   // カレンダー生成（動的年対応）
   const daysCount = getDaysInMonth(calYear, calMonth);
   const firstDay = getFirstDayOfMonth(calYear, calMonth);
-  const today = new Date();
-  const todayYear = today.getFullYear();
-  const todayMonth = today.getMonth() + 1;
-  const todayDate = today.getDate();
-  const isToday = (d: number) => calYear === todayYear && calMonth === todayMonth && d === todayDate;
+  // mounted後のみ「今日」をハイライト（SSR時はハイライトなし）
+  const [todayInfo, setTodayInfo] = useState({ year: 0, month: 0, day: 0 });
+  useEffect(() => {
+    const now = new Date();
+    setTodayInfo({ year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() });
+  }, []);
+  const isToday = (d: number) => calYear === todayInfo.year && calMonth === todayInfo.month && d === todayInfo.day;
   const isSelected = (d: number) => calMonth === formData.month && d === formData.day;
 
   return (

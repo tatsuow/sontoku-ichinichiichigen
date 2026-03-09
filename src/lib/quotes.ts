@@ -151,9 +151,11 @@ export async function getQuoteByDate(
 }
 
 export async function getTodayQuote(): Promise<Quote | null> {
-  const today = new Date();
-  const month = today.getMonth() + 1;
-  const day = today.getDate();
+  // Vercelサーバーはutcなので、JSTで「今日」を取得
+  const now = new Date();
+  const jst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+  const month = jst.getMonth() + 1;
+  const day = jst.getDate();
   return getQuoteByDate(month, day);
 }
 
