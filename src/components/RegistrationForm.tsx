@@ -67,6 +67,13 @@ export function RegistrationForm() {
     setMounted(true);
   }, []);
 
+  // カレンダー月が変わったらformData.monthも同期（表示月＝登録対象月）
+  useEffect(() => {
+    if (mounted) {
+      setFormData((prev) => ({ ...prev, month: calMonth }));
+    }
+  }, [calMonth, mounted]);
+
   // トークン保存
   const handleSaveTokens = () => {
     localStorage.setItem('gemini-api-key', apiKey);
