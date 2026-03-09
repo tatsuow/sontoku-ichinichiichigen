@@ -3,8 +3,6 @@
 import { useState, useCallback, useEffect } from 'react';
 
 interface FormData {
-  month: number;
-  day: number;
   title: string;
   originalText: string;
   modernTranslation: string;
@@ -27,8 +25,6 @@ function getFirstDayOfMonth(year: number, month: number): number {
 
 // SSR/クライアント両方で安全な初期値（useEffectで上書きされる）
 const INITIAL_FORM: FormData = {
-  month: 1,
-  day: 1,
   title: '',
   originalText: '',
   modernTranslation: '',
@@ -53,26 +49,19 @@ export function RegistrationForm() {
   const [calMonth, setCalMonth] = useState(1);
   const [calYear, setCalYear] = useState(2026);
 
+  // 選択中の日（カレンダーの月とは別に管理）
+  const [selectedDay, setSelectedDay] = useState(1);
+
   // クライアント側でのみ「今日」の日付とlocalStorageを読み込む
   useEffect(() => {
     setApiKey(localStorage.getItem('gemini-api-key') || '');
     setGithubToken(localStorage.getItem('github-token') || '');
     const now = new Date();
-    const m = now.getMonth() + 1;
-    const d = now.getDate();
-    const y = now.getFullYear();
-    setFormData((prev) => ({ ...prev, month: m, day: d }));
-    setCalMonth(m);
-    setCalYear(y);
+    setCalMonth(now.getMonth() + 1);
+    setCalYear(now.getFullYear());
+    setSelectedDay(now.getDate());
     setMounted(true);
   }, []);
-
-  // カレンダー月が変わったらformData.monthも同期（表示月＝登録対象月）
-  useEffect(() => {
-    if (mounted) {
-      setFormData((prev) => ({ ...prev, month: calMonth }));
-    }
-  }, [calMonth, mounted]);
 
   // トークン保存
   const handleSaveTokens = () => {
@@ -121,7 +110,7 @@ export function RegistrationForm() {
 
   // カレンダーで日を選択
   const handleCalDaySelect = (d: number) => {
-    setFormData((prev) => ({ ...prev, month: calMonth, day: d }));
+    setSelectedDay(d);
   };
 
   // カレンダー月移動（年もまたぐ）
@@ -156,9 +145,9 @@ export function RegistrationForm() {
       if (!result.success) throw new Error(result.error || '解析に失敗しました');
 
       const d = result.data;
+      const aiMonth = Number(d.month) || new Date().getMonth() + 1;
+      const aiDay = Number(d.day) || new Date().getDate();
       setFormData({
-        month: d.month || 1,
-        day: d.day || 1,
         title: d.title || '',
         originalText: (d.originalText || '').replace(/\\n/g, '\n'),
         modernTranslation: (d.modernTranslation || '').replace(/\\n/g, '\n'),
@@ -166,8 +155,9 @@ export function RegistrationForm() {
         background: (d.background || '').replace(/\\n/g, '\n'),
         implication: (d.implication || '').replace(/\\n/g, '\n'),
       });
-      setCalMonth(d.month || new Date().getMonth() + 1);
+      setCalMonth(aiMonth);
       setCalYear(new Date().getFullYear());
+      setSelectedDay(aiDay);
       setStatus('idle');
       setSuccessMessage('AI解析が完了しました。内容を確認・編集して登録してください。');
       setTimeout(() => setSuccessMessage(''), 4000);
@@ -186,7 +176,7 @@ export function RegistrationForm() {
     setErrorMessage('');
 
     try {
-      const payload = { ...formData, imageData: uploadedImage };
+      const payload = { ...formData, month: calMonth, day: selectedDay, imageData: uploadedImage };
       const res = await fetch('/api/save-quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-GitHub-Token': githubToken },
@@ -208,16 +198,13 @@ export function RegistrationForm() {
       if (!result.success) throw new Error(result.error || '保存に失敗しました');
 
       setStatus('saved');
-      setSuccessMessage(`${formData.month}月${formData.day}日「${formData.title}」をGitHubに保存しました。Vercelが自動デプロイします。`);
+      setSuccessMessage(`${calMonth}月${selectedDay}日「${formData.title}」をGitHubに保存しました。Vercelが自動デプロイします。`);
       // 今日の日付にリセット
       const now = new Date();
-      setFormData({
-        ...INITIAL_FORM,
-        month: now.getMonth() + 1,
-        day: now.getDate(),
-      });
+      setFormData(INITIAL_FORM);
       setCalMonth(now.getMonth() + 1);
       setCalYear(now.getFullYear());
+      setSelectedDay(now.getDate());
       setUploadedImage(null);
       setTimeout(() => { setStatus('idle'); setSuccessMessage(''); }, 6000);
     } catch (err) {
@@ -259,7 +246,7 @@ export function RegistrationForm() {
     setTodayInfo({ year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() });
   }, []);
   const isToday = (d: number) => calYear === todayInfo.year && calMonth === todayInfo.month && d === todayInfo.day;
-  const isSelected = (d: number) => calMonth === formData.month && d === formData.day;
+  const isSelected = (d: number) => d === selectedDay;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -395,7 +382,7 @@ export function RegistrationForm() {
 
               {/* 選択表示 */}
               <div style={{ marginTop: '8px', textAlign: 'center', fontSize: '13px', color: '#6b5344', fontWeight: 600 }}>
-                {formData.month}月{formData.day}日
+                {calMonth}月{selectedDay}日
               </div>
             </div>
           </div>
@@ -479,7 +466,7 @@ export function RegistrationForm() {
             cursor: canSave ? 'pointer' : 'not-allowed',
           }}
         >
-          {isSaving ? '保存中...' : `${formData.month}月${formData.day}日「${formData.title || '---'}」を登録`}
+          {isSaving ? '保存中...' : `${calMonth}月${selectedDay}日「${formData.title || '---'}」を登録`}
         </button>
         {!githubToken && (
           <p style={{ fontSize: '11px', color: '#dc2626', marginTop: '6px', textAlign: 'center' }}>GitHubトークンを設定すると登録が有効になります</p>
