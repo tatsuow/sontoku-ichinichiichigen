@@ -65,7 +65,10 @@ export function AccordionSection({ title, icon, htmlContent, defaultOpen = false
         </svg>
       </button>
       {isOpen && (
-        <div style={{ padding: '16px 20px 20px', backgroundColor: '#fff' }}>
+        <div
+          onClick={() => setIsOpen(false)}
+          style={{ padding: '16px 20px 20px', backgroundColor: '#fff', cursor: 'pointer' }}
+        >
           <div
             className="prose-content"
             style={{
