@@ -213,10 +213,48 @@ export function RegistrationForm() {
     }
   };
 
+  // MDファイルダウンロード
+  const handleDownloadMd = () => {
+    const datePrefix = `${calYear}-${String(calMonth).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+    const safeTitle = formData.title || '無題';
+    const mdContent = `---
+title: ${datePrefix}_${safeTitle}
+source: 二宮尊徳一日一言　致知出版社
+tags:
+  - 二宮尊徳
+---
+
+## 原文
+${formData.originalText || ''}
+
+## 現代語訳
+${formData.modernTranslation || ''}
+
+## 語句解説
+${formData.glossary || ''}
+
+## 補足・背景
+${formData.background || ''}
+
+## 仕事／暮らしへの示唆
+${formData.implication || ''}
+`;
+    const blob = new Blob([mdContent], { type: 'text/markdown; charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${datePrefix}_${safeTitle}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const isAnalyzing = status === 'analyzing';
   const isSaving = status === 'saving';
   const canAnalyze = !!apiKey && !!uploadedImage && !isAnalyzing && !isSaving;
   const canSave = !!formData.title && !!githubToken && !isAnalyzing && !isSaving;
+  const canDownloadMd = !!formData.title;
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 14px', borderRadius: '10px',
@@ -419,6 +457,26 @@ export function RegistrationForm() {
             )}
           </button>
           {!apiKey && <p style={{ fontSize: '11px', color: '#dc2626', marginTop: '6px' }}>Gemini APIキーを設定してください</p>}
+
+          {/* MDダウンロードボタン */}
+          {canDownloadMd && (
+            <button
+              type="button"
+              onClick={handleDownloadMd}
+              style={{
+                width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid rgba(107,83,68,0.25)',
+                backgroundColor: '#faf8f5', color: '#6b5344',
+                fontWeight: 500, fontSize: '13px', cursor: 'pointer',
+                marginTop: '10px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              }}
+            >
+              <svg style={{ width: '15px', height: '15px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              MDファイルをダウンロード
+            </button>
+          )}
         </div>
 
         <div style={{ height: '1px', backgroundColor: 'rgba(107,83,68,0.15)', margin: '0 0 20px' }} />
