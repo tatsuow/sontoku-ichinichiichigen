@@ -11,10 +11,13 @@ export function QuotesTable({ quotes: initialQuotes }: QuotesTableProps) {
   const [quotes, setQuotes] = useState(initialQuotes);
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  // 初期値はSSR安全な値、useEffectでクライアントの今月に上書き
+  // 初期値はSSR安全な値、useEffectでクライアントの今月・年に上書き
   const [filterMonth, setFilterMonth] = useState<number | 'all'>(1);
+  const [calYear, setCalYear] = useState(2026);
   useEffect(() => {
-    setFilterMonth(new Date().getMonth() + 1);
+    const now = new Date();
+    setFilterMonth(now.getMonth() + 1);
+    setCalYear(now.getFullYear());
   }, []);
 
   const filteredQuotes = useMemo(() => {
@@ -61,8 +64,40 @@ export function QuotesTable({ quotes: initialQuotes }: QuotesTableProps) {
     }
   };
 
-  const handleEdit = (id: string) => {
-    alert('編集機能は今後実装予定です。');
+  const handleDownloadMd = (quote: Quote) => {
+    const datePrefix = `${calYear}-${String(quote.month).padStart(2, '0')}-${String(quote.day).padStart(2, '0')}`;
+    const safeTitle = quote.frontmatter.title || '無題';
+    const mdContent = `---
+title: ${datePrefix}_${safeTitle}
+source: ${quote.frontmatter.source || '二宮尊徳一日一言　致知出版社'}
+tags:
+  - 二宮尊徳
+---
+
+## 原文
+${quote.content.原文 || ''}
+
+## 現代語訳
+${quote.content.現代語訳 || ''}
+
+## 語句解説
+${quote.content.語句解説 || ''}
+
+## 補足・背景
+${quote.content.補足背景 || ''}
+
+## 仕事／暮らしへの示唆
+${quote.content.示唆 || ''}
+`;
+    const blob = new Blob([mdContent], { type: 'text/markdown; charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${datePrefix}_${safeTitle}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -158,9 +193,9 @@ export function QuotesTable({ quotes: initialQuotes }: QuotesTableProps) {
                   </td>
                   <td className="px-4 py-3 flex justify-center gap-2">
                     <button
-                      onClick={() => handleEdit(quote.id)}
+                      onClick={() => handleDownloadMd(quote)}
                       className="p-2 hover:bg-[#f5f1ec] rounded transition-colors"
-                      title="編集"
+                      title="MDダウンロード"
                     >
                       <svg
                         className="w-4 h-4 text-[#6b5344]"
@@ -172,7 +207,7 @@ export function QuotesTable({ quotes: initialQuotes }: QuotesTableProps) {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
                         />
                       </svg>
                     </button>
